@@ -1,6 +1,7 @@
 package task3_4.service;
 
 import task3_4.catalog.*;
+import task3_4.customer.Customer;
 import task3_4.status.*;
 
 import java.util.ArrayList;
@@ -15,11 +16,14 @@ public class BookStore {
         this.orders = new ArrayList<>();
     }
 
+    public Inventory getInventory() {return inventory;}
+    public List<Order> getOrders() {return orders;}
+
     public void createOrder(List<Book> books) {
         Order order = new Order(orders.size() + 1);
         for (Book book : books) {
             order.addBook(book);
-            if (book.getStatus().equals(BookStatus.MISSING)) {
+            if (book.getStatus() == BookStatus.MISSING) {
                 inventory.markBookMissing(book);
                 inventory.requestBook(book, order);
             }
@@ -29,6 +33,20 @@ public class BookStore {
 
         if (order.hasMissingBooks()) {
             System.out.println("В заказе есть отсутствующая книга, оформлен запрос на её поставку.\n");
+        }
+    }
+
+    public void createOrder(List<Book> books, Customer customer) {
+        createOrder(books);
+        orders.get(orders.size() - 1).setCustomer(customer);
+    }
+
+    public void attachCustomerToOrder(int orderId, Customer customer) {
+        for (Order o : orders) {
+            if (o.getId() == orderId) {
+                o.setCustomer(customer);
+                return;
+            }
         }
     }
 
@@ -43,9 +61,31 @@ public class BookStore {
         System.out.println("Заказ №" + id + " не найден.");
     }
 
+    public void completeOrder(int id) {
+        for (Order order : orders) {
+            if (order.getId() == id) {
+                if (order.hasMissingBooks()) {
+                    System.out.println("Нельзя завершить заказ №" + id + ": в заказе есть отсутствующие книги.");
+                    return;
+                }
+                order.changeStatus(OrderStatus.COMPLETED);
+                System.out.println("Заказ №" + id + " завершён.");
+                return;
+            }
+        }
+        System.out.println("Заказ №" + id + " не найден.");
+    }
+
+    public Order findOrderById(int orderId) {
+        for (Order o : orders) {
+            if (o.getId() == orderId) return o;
+        }
+        return null;
+    }
+
     public void addBookToStock(Book book) {
         inventory.addBook(book);
-        inventory.fulFillRequest(book);
+        inventory.fulfillRequest(book);
         System.out.println("Добавлена книга: " + book.getTitle() + " [статус: " + book.getStatus() + "]");
     }
 
@@ -78,18 +118,21 @@ public class BookStore {
         }
     }
 
-    public void completeOrder(int id) {
-        for (Order order : orders) {
-            if (order.getId() == id) {
-                if (order.hasMissingBooks()) {
-                    System.out.println("Нельзя завершить заказ №" + id + ": в заказе есть отсутствующие книги.");
-                    return;
-                }
-                order.changeStatus(OrderStatus.COMPLETED);
-                System.out.println("Заказ №" + id + " завершён.");
-                return;
+    public Book findBookByTitle(String title) {
+        for (Book b : inventory.getBooks()) {
+            if (b.getTitle() != null && b.getTitle().equalsIgnoreCase(title)) return b;
+        }
+        return null;
+    }
+
+    public Book findBookByTitleAndAuthor(String title, String author) {
+        for (Book b : inventory.getBooks()) {
+            if (b.getTitle() != null && b.getAuthor() != null
+                    && b.getTitle().equalsIgnoreCase(title)
+                    && b.getAuthor().equalsIgnoreCase(author)) {
+                return b;
             }
         }
-        System.out.println("Заказ №" + id + " не найден.");
+        return null;
     }
 }

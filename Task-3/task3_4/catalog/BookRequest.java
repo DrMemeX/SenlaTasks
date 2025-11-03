@@ -14,16 +14,17 @@ public class BookRequest {
         this.resolved = false;
     }
 
-    public void addWaitingOrder(Order order) {
-        waitingOrders.add(order);
-    }
+    public Book getBook() {return book;}
+    public List<Order> getWaitingOrders() {return waitingOrders;}
+
+    public void addWaitingOrder(Order order) {waitingOrders.add(order);}
 
     public void resolve() {
         this.resolved = true;
     }
 
     public boolean isResolved() {return resolved;}
-    public Book getBook() {return book;}
+
 
     @Override
     public String toString() {

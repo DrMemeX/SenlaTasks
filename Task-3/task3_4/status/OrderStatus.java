@@ -1,9 +1,22 @@
 package task3_4.status;
 
-public final class OrderStatus {
-    public static final String NEW = "Новый";
-    public static final String COMPLETED = "Выполнен";
-    public static final String CANCELLED = "Отменён";
+public enum OrderStatus {
+    NEW("Новый"),
+    COMPLETED("Выполнен"),
+    CANCELLED("Отменён");
 
-    private OrderStatus() {}
+    private final String description;
+
+    OrderStatus(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    @Override
+    public String toString() {
+        return description;
+    }
 }

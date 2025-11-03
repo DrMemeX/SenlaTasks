@@ -40,7 +40,7 @@ public class Inventory {
         request.addWaitingOrder(order);
     }
 
-    public void fulFillRequest(Book book) {
+    public void fulfillRequest(Book book) {
         BookRequest request = findRequestByBook(book);
         if (request != null && !request.isResolved()) {
             request.resolve();
@@ -51,6 +51,7 @@ public class Inventory {
 
     public List<Book> getBooks() {return books;}
     public List<BookRequest> getRequests() {return requests;}
+
 
     private BookRequest findRequestByBook(Book book) {
         for (BookRequest request : requests) {
