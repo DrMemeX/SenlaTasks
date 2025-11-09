@@ -1,4 +1,4 @@
-package task3_4.catalog;
+package task3_4.model.catalog;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,9 +1,9 @@
-package task3_4.service;
+package task3_4.model.service;
 
-import task3_4.catalog.Book;
-import task3_4.catalog.BookRequest;
-import task3_4.catalog.Order;
-import task3_4.status.BookStatus;
+import task3_4.model.catalog.Book;
+import task3_4.model.catalog.BookRequest;
+import task3_4.model.catalog.Order;
+import task3_4.model.status.BookStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +24,6 @@ public class Inventory {
     public void markBookMissing(Book book) {
         book.setStatus(BookStatus.MISSING);
         System.out.println("Книга «" + book.getTitle() + "» отмечена как отсутствующая.");
-
-        BookRequest request = findRequestByBook(book);
-        if (request == null) {
-            requests.add(new BookRequest(book));
-        }
     }
 
     public void requestBook(Book book, Order order) {

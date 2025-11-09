@@ -1,4 +1,4 @@
-package task3_4.status;
+package task3_4.model.status;
 
 public enum BookStatus {
     AVAILABLE("В наличии"),

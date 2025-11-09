@@ -1,8 +1,8 @@
-package task3_4.catalog;
+package task3_4.model.catalog;
 
-import task3_4.customer.Customer;
-import task3_4.status.BookStatus;
-import task3_4.status.OrderStatus;
+import task3_4.model.customer.Customer;
+import task3_4.model.status.BookStatus;
+import task3_4.model.status.OrderStatus;
 
 import java.time.LocalDate;
 import java.util.List;

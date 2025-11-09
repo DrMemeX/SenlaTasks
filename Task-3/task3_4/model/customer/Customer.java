@@ -1,4 +1,4 @@
-package task3_4.customer;
+package task3_4.model.customer;
 
 public class Customer {
     private String name;

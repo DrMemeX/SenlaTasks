@@ -1,8 +1,13 @@
-package task3_4.service;
+package task3_4.model.service;
 
-import task3_4.catalog.*;
-import task3_4.customer.Customer;
-import task3_4.status.*;
+
+import task3_4.model.catalog.Book;
+import task3_4.model.catalog.BookRequest;
+import task3_4.model.catalog.Order;
+import task3_4.model.customer.Customer;
+import task3_4.model.status.BookStatus;
+import task3_4.model.status.OrderStatus;
+
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
