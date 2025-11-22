@@ -1,6 +1,8 @@
 package task3_4.view.util;
 
 public final class ConsoleView {
+
+    private static final ConsoleView INSTANCE = new ConsoleView();
     private ConsoleView() {}
 
     public static void  hr() {

@@ -1,2 +1,2 @@
-Main-Class: task3_4.Main
+Main-Class: task3_4.main.Main
 

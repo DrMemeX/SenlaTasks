@@ -1,166 +1,157 @@
 package task3_4.view.factory;
 
-import task3_4.model.catalog.Book;
-import task3_4.model.catalog.Order;
-import task3_4.model.service.BookStore;
-import task3_4.model.service.BookStoreReports;
-import task3_4.view.action.IAction;
+import task3_4.features.books.BookService;
+import task3_4.features.customers.CustomerService;
+import task3_4.features.orders.OrderService;
+import task3_4.features.requests.RequestService;
+import task3_4.features.reports.BookReportService;
+import task3_4.features.reports.OrderReportService;
+import task3_4.features.reports.RequestReportService;
+
+import task3_4.view.action.customers.buisness.*;
 import task3_4.view.menu.Menu;
-import task3_4.view.util.ConsoleView;
-import task3_4.view.util.In;
 
-import java.time.LocalDate;
+import task3_4.view.action.books.business.*;
+import task3_4.view.action.books.reports.*;
 
-public final class DefaultUiActionFactory implements IUiActionFactory {
-    private final BookStore store;
-    private final BookStoreReports reports;
+import task3_4.view.action.orders.business.*;
+import task3_4.view.action.orders.reports.*;
 
-    public  DefaultUiActionFactory(BookStore store) {
-        this.store = store;
-        this.reports = new BookStoreReports(store, true);
-    }
+import task3_4.view.action.requests.business.*;
+import task3_4.view.action.requests.reports.*;
 
-    private IAction action(String title, Runnable r) {
-        return new IAction() {
-            @Override
-            public String title() {return title;}
+public class DefaultUiActionFactory implements IUiActionFactory {
 
-            @Override
-            public void execute() {r.run();}
-        };
-    }
+    private final BookService bookService;
+    private final CustomerService customerService;
+    private final OrderService orderService;
+    private final RequestService requestService;
+    private final BookReportService bookReportService;
+    private final OrderReportService orderReportService;
+    private final RequestReportService requestReportService;
 
-    private Menu booksMenu() {
-        Menu m = new Menu("Книги");
-
-        m.add("Показать все книги в наличии",
-                action("list_books", store::showBooksInStock));
-
-        m.add("Сортировать по названию (A→Z)",
-                action("sort_books_title_asc", () -> reports.showBooksSortedByTitle(true)));
-
-        m.add("Сортировать по названию (Z→A)",
-                action("sort_books_title_desc", () -> reports.showBooksSortedByTitle(false)));
-
-        m.add("Сортировать по дате выпуска",
-                action("sort_books_date", reports::showBooksSortedByReleaseDate));
-
-        m.add("Сортировать по цене",
-                action("sort_books_price", reports::showBooksSortedByPrice));
-
-        m.add("Сортировать по наличию",
-                action("sort_books_availability", reports::showBooksSortedByAvailability));
-
-        m.add("Описание книги",
-                action("book_description", () -> {
-                    String title = In.get().line("Введите название книги: ");
-                    Book b = store.findBookByTitle(title);
-                    if (b == null) ConsoleView.warn("Книга не найдена.");
-                    else reports.showBookDescriptionText(b);
-                }));
-
-        return m;
-    }
-
-    private Menu ordersMenu() {
-        Menu m = new Menu("Заказы");
-
-        m.add("Показать все заказы",
-                action("show_orders", store::showAllOrders));
-
-        m.add("Сортировать по дате исполнения (↑)",
-                action("sort_orders_date_asc", () -> reports.showOrdersSortedByCompletionDate(true)));
-
-        m.add("Сортировать по дате исполнения (↓)",
-                action("sort_orders_date_desc", () -> reports.showOrdersSortedByCompletionDate(false)));
-
-        m.add("Сортировать по цене (↑)",
-                action("sort_orders_price_asc", () -> reports.showOrdersSortedByPrice(true)));
-
-        m.add("Сортировать по цене (↓)",
-                action("sort_orders_price_desc", () -> reports.showOrdersSortedByPrice(false)));
-
-        m.add("Сортировать по статусу (A→Z)",
-                action("sort_orders_status_asc", () -> reports.showOrdersSortedByStatus(true)));
-
-        m.add("Сортировать по статусу (Z→A)",
-                action("sort_orders_status_desc", () -> reports.showOrdersSortedByStatus(false)));
-
-        m.add("Посмотреть детали заказа",
-                action("order_details", () -> {
-                    int id = In.get().intInRange("Введите номер заказа: ", 1, Integer.MAX_VALUE);
-                    reports.showOrderDetails(id);
-                }));
-
-        return m;
-    }
-
-    private Menu requestsMenu() {
-        Menu m = new Menu("📦 Запросы на книги");
-
-        m.add("Показать активные запросы",
-                action("show_requests", store::showActiveRequests));
-
-        m.add("Сортировать по алфавиту (A→Z)",
-                action("requests_by_title_asc", () -> reports.showRequestsSortedByTitle(true)));
-
-        m.add("Сортировать по алфавиту (Z→A)",
-                action("requests_by_title_desc", () -> reports.showRequestsSortedByTitle(false)));
-
-        m.add("Сортировать по количеству запросов (↑)",
-                action("requests_by_count_asc", () -> reports.showRequestsSortedByCount(true)));
-
-        m.add("Сортировать по количеству запросов (↓)",
-                action("requests_by_count_desc", () -> reports.showRequestsSortedByCount(false)));
-
-        return m;
-    }
-
-    private Menu reportsMenu() {
-        Menu m = new Menu("Отчёты");
-
-        m.add("Выполненные заказы по дате (за период)",
-                action("done_orders_period", () -> {
-                    LocalDate from = LocalDate.parse(In.get().line("Введите дату начала (ГГГГ-ММ-ДД): "));
-                    LocalDate to   = LocalDate.parse(In.get().line("Введите дату окончания (ГГГГ-ММ-ДД): "));
-                    reports.showCompletedOrdersByDate(from, to, true);
-                }));
-
-        m.add("Выполненные заказы по цене (за период)",
-                action("done_orders_by_price", () -> {
-                    LocalDate from = LocalDate.parse(In.get().line("Введите дату начала (ГГГГ-ММ-ДД): "));
-                    LocalDate to   = LocalDate.parse(In.get().line("Введите дату окончания (ГГГГ-ММ-ДД): "));
-                    reports.showCompletedOrdersByPrice(from, to, true);
-                }));
-
-        m.add("Сумма заработанных средств за период",
-                action("income_period", () -> {
-                    LocalDate from = LocalDate.parse(In.get().line("Введите дату начала (ГГГГ-ММ-ДД): "));
-                    LocalDate to   = LocalDate.parse(In.get().line("Введите дату окончания (ГГГГ-ММ-ДД): "));
-                    reports.showTotalIncome(from, to);
-                }));
-
-        m.add("Количество выполненных заказов за период",
-                action("count_orders_period", () -> {
-                    LocalDate from = LocalDate.parse(In.get().line("Введите дату начала (ГГГГ-ММ-ДД): "));
-                    LocalDate to   = LocalDate.parse(In.get().line("Введите дату окончания (ГГГГ-ММ-ДД): "));
-                    reports.showCompletedOrdersCount(from, to);
-                }));
-
-        m.add("«Залежавшиеся» книги (> 6 мес.)",
-                action("stale_books", () -> reports.showOldBooks(true, false, true)));
-
-        return m;
+    public DefaultUiActionFactory(BookService bookService,
+                                  CustomerService customerService,
+                                  OrderService orderService,
+                                  RequestService requestService,
+                                  BookReportService bookReportService,
+                                  OrderReportService orderReportService,
+                                  RequestReportService requestReportService) {
+        this.bookService = bookService;
+        this.customerService = customerService;
+        this.orderService = orderService;
+        this.requestService = requestService;
+        this.bookReportService = bookReportService;
+        this.orderReportService = orderReportService;
+        this.requestReportService = requestReportService;
     }
 
     @Override
     public Menu buildRootMenu() {
-        Menu root = new Menu("=== КОНСОЛЬНЫЙ КНИЖНЫЙ МАГАЗИН ===");
 
-        root.add("Книги", booksMenu());
-        root.add("Заказы", ordersMenu());
-        root.add("Запросы на книги", requestsMenu());
-        root.add("Отчёты", reportsMenu());
+        // КНИГИ: бизнес
+        Menu booksBusiness = new Menu("Операции с книгами");
+        booksBusiness.add("Добавить книгу", new AddBookAction(bookService));
+        booksBusiness.add("Удалить книгу", new DeleteBookAction(bookService));
+        booksBusiness.add("Импорт книг (CSV)", new ImportBooksAction(bookService));
+        booksBusiness.add("Экспорт книг (CSV)", new ExportBooksAction(bookService));
+        booksBusiness.add("Обновить данные книги", new UpdateBookAction(bookService));
+
+        // КНИГИ: отчёты
+        Menu booksReports = new Menu("Отчёты по книгам");
+        booksReports.add("Описание по названию", new BookDescriptionByTitleAction(bookReportService));
+        booksReports.add("Описание по названию и автору",
+                new BookDescriptionByTitleAndAuthorAction(bookReportService));
+        booksReports.add("Сортировать по названию",
+                new BooksSortByTitleAction(bookReportService));
+        booksReports.add("Сортировать по доступности",
+                new BooksSortByAvailabilityAction(bookReportService));
+        booksReports.add("Сортировать по цене",
+                new BooksSortByPriceAction(bookReportService));
+        booksReports.add("Сортировать по дате выпуска",
+                new BooksSortByReleaseDateAction(bookReportService));
+        booksReports.add("«Старые» книги по дате",
+                new OldBooksSortByDateAction(bookReportService));
+        booksReports.add("«Старые» книги по цене",
+                new OldBooksSortByPriceAction(bookReportService));
+
+        Menu booksMenu = new Menu("Книги");
+        booksMenu.add("Бизнес-операции", booksBusiness);
+        booksMenu.add("Отчёты по книгам", booksReports);
+
+        // ПОКУПАТЕЛИ
+        Menu customersMenu = new Menu("Покупатели");
+        customersMenu.add("Добавить покупателя", new AddCustomerAction(customerService));
+        customersMenu.add("Удалить покупателя", new DeleteCustomerAction(customerService));
+        customersMenu.add("Импорт покупателей (CSV)", new ImportCustomersAction(customerService));
+        customersMenu.add("Экспорт покупателей (CSV)", new ExportCustomersAction(customerService));
+        customersMenu.add("Обновить данные покупателя", new UpdateCustomerAction(customerService));
+
+        // ЗАКАЗЫ: бизнес
+        Menu ordersBusiness = new Menu("Операции с заказами");
+        ordersBusiness.add("Создать заказ",
+                new CreateOrderAction(orderService, bookService, customerService));
+        ordersBusiness.add("Отменить заказ", new CancelOrderAction(orderService));
+        ordersBusiness.add("Удалить заказ", new DeleteOrderAction(orderService));
+        ordersBusiness.add("Обновить статус заказа",
+                new UpdateOrderStatusAction(orderService));
+        ordersBusiness.add("Завершить заказ", new CompleteOrderAction(orderService));
+        ordersBusiness.add("Импорт заказов (CSV)", new ImportOrdersAction(orderService));
+        ordersBusiness.add("Экспорт заказов (CSV)", new ExportOrdersAction(orderService));
+
+        // ЗАКАЗЫ: отчёты
+        Menu ordersReports = new Menu("Отчёты по заказам");
+        ordersReports.add("Выполненные по дате",
+                new CompletedOrdersByDateAction(orderReportService));
+        ordersReports.add("Выполненные по цене",
+                new CompletedOrdersByPriceAction(orderReportService));
+        ordersReports.add("Количество выполненных заказов",
+                new CompletedOrdersCountAction(orderReportService));
+        ordersReports.add("Сортировать по дате",
+                new OrdersSortByDateAction(orderReportService));
+        ordersReports.add("Сортировать по цене",
+                new OrdersSortByPriceAction(orderReportService));
+        ordersReports.add("Сортировать по статусу",
+                new OrdersSortByStatusAction(orderReportService));
+        ordersReports.add("Детали заказа", new OrderDetailsAction(orderReportService));
+        ordersReports.add("Общий доход", new TotalIncomeAction(orderReportService));
+
+        Menu ordersMenu = new Menu("Заказы");
+        ordersMenu.add("Бизнес-операции", ordersBusiness);
+        ordersMenu.add("Отчёты по заказам", ordersReports);
+
+        // ЗАПРОСЫ: бизнес
+        Menu requestsBusiness = new Menu("Операции с запросами");
+        requestsBusiness.add("Отметить запрос выполненным",
+                new CompleteRequestAction(requestService));
+        requestsBusiness.add("Удалить запрос",
+                new DeleteRequestAction(requestService));
+        requestsBusiness.add("Импорт запросов (CSV)",
+                new ImportRequestsAction(requestService));
+        requestsBusiness.add("Экспорт запросов (CSV)",
+                new ExportRequestsAction(requestService));
+
+        // ЗАПРОСЫ: отчёты
+        Menu requestsReports = new Menu("Отчёты по запросам");
+        requestsReports.add("Невыполненные запросы",
+                new ShowUnresolvedRequestsAction(requestReportService));
+        requestsReports.add("Выполненные запросы",
+                new ShowResolvedRequestsAction(requestReportService));
+        requestsReports.add("Сортировать по количеству ожиданий",
+                new SortRequestsByCountAction(requestReportService));
+        requestsReports.add("Сортировать по названию книги",
+                new SortRequestsByTitleAction(requestReportService));
+
+        Menu requestsMenu = new Menu("Запросы");
+        requestsMenu.add("Бизнес-операции", requestsBusiness);
+        requestsMenu.add("Отчёты по запросам", requestsReports);
+
+        // КОРНЕВОЕ МЕНЮ
+        Menu root = new Menu("Главное меню");
+        root.add("Книги", booksMenu);
+        root.add("Покупатели", customersMenu);
+        root.add("Заказы", ordersMenu);
+        root.add("Запросы", requestsMenu);
 
         return root;
     }
