@@ -25,4 +25,12 @@ public class OrderRepository {
     public boolean deleteOrderById(long id) {
         return orderList.removeIf(o -> o.getId() == id);
     }
+
+    public void restoreState(List<Order> orderState) {
+        if (orderState != null) {
+            orderList.clear();
+            orderList.addAll(orderState);
+        }
+    }
+
 }

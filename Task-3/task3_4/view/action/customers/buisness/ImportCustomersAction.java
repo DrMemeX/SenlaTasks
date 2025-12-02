@@ -2,8 +2,8 @@ package task3_4.view.action.customers.buisness;
 
 import task3_4.exceptions.csv.CsvException;
 import task3_4.exceptions.domain.DomainException;
-import task3_4.features.customers.CustomerCsvDtoApplier;
-import task3_4.features.customers.CustomerCsvImporter;
+import task3_4.cvs.applier.CustomerCsvDtoApplier;
+import task3_4.cvs.importer.CustomerCsvImporter;
 import task3_4.features.customers.CustomerService;
 import task3_4.view.action.IAction;
 import task3_4.view.util.ConsoleView;

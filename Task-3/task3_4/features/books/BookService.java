@@ -1,16 +1,22 @@
 package task3_4.features.books;
 
+import task3_4.cvs.applier.BookCsvDtoApplier;
+import task3_4.cvs.exporter.BookCsvExporter;
+import task3_4.cvs.importer.BookCsvImporter;
 import task3_4.exceptions.domain.BookNotFoundException;
 import task3_4.exceptions.domain.DomainException;
+import task3_4.features.requests.RequestService;
 
 import java.util.List;
 
 public class BookService {
 
     private final BookRepository repo;
+    private final RequestService requestService;
 
-    public BookService(BookRepository repo) {
+    public BookService(BookRepository repo, RequestService requestService) {
         this.repo = repo;
+        this.requestService = requestService;
     }
 
     public BookRepository getBookRepository() {
@@ -49,6 +55,11 @@ public class BookService {
 
     public void addBook(Book book) {
         repo.addBook(book);
+        try {
+            requestService.fulfillRequest(book);
+        } catch (Exception ignored) {
+
+        }
     }
 
     public void deleteBook(long id) {

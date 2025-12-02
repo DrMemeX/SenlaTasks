@@ -2,9 +2,11 @@ package task3_4.features.books;
 
 import task3_4.common.status.BookStatus;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
-public class Book {
+public class Book implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private static long nextId = 1;
 

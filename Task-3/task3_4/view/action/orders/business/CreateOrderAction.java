@@ -40,18 +40,18 @@ public class CreateOrderAction implements IAction {
         List<Book> books = new ArrayList<>();
 
         while (true) {
-            String s = In.get().line("Введите ID книги (или пустую строку для завершения): ");
-            if (s.isBlank()) break;
+            long bookId = In.get().intInRange(
+                    "Введите ID книги (0 — завершить выбор): ",
+                    0,
+                    Integer.MAX_VALUE
+            );
+
+            if (bookId == 0) break;
 
             try {
-                long id = Long.parseLong(s);
-                Book b = bookService.getBookById(id);
-
+                Book b = bookService.getBookById(bookId);
                 books.add(b);
                 ConsoleView.ok("Книга добавлена.");
-
-            } catch (NumberFormatException e) {
-                ConsoleView.warn("Некорректный формат ID книги.");
             } catch (DomainException e) {
                 ConsoleView.warn(e.getMessage());
             }

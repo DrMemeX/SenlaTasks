@@ -40,4 +40,11 @@ public class BookRepository {
     public boolean deleteBookById(long id) {
         return bookList.removeIf(b -> b.getId() == id);
     }
+
+    public void restoreState(List<Book> bookState) {
+        if (bookState != null) {
+            bookList.clear();
+            bookList.addAll(bookState);
+        }
+    }
 }

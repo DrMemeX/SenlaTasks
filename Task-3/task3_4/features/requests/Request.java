@@ -3,10 +3,13 @@ package task3_4.features.requests;
 import task3_4.features.books.Book;
 import task3_4.features.orders.Order;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Request {
+public class Request implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static long nextId = 1;
 
     private long id;

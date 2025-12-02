@@ -38,8 +38,8 @@ public class UpdateBookAction implements IAction {
             String statusInput = In.get().line("Статус (AVAILABLE/MISSING): ");
             BookStatus newStatus = BookStatus.valueOf(statusInput.trim());
 
-            LocalDate releaseDate = LocalDate.parse(In.get().line("Дата выпуска (YYYY-MM-DD): "));
-            LocalDate addedDate = LocalDate.parse(In.get().line("Дата добавления (YYYY-MM-DD): "));
+            LocalDate releaseDate = LocalDate.parse(In.get().line("Дата выпуска (ГГГГ-ММ-ДД): "));
+            LocalDate addedDate = LocalDate.parse(In.get().line("Дата добавления (ГГГГ-ММ-ДД): "));
 
             String newDescription = In.get().line("Описание: ");
 
@@ -59,7 +59,7 @@ public class UpdateBookAction implements IAction {
         } catch (IllegalArgumentException e) { // BookStatus.valueOf
             ConsoleView.warn("Некорректный статус книги. Допустимые значения: AVAILABLE, MISSING.");
         } catch (DateTimeParseException e) {
-            ConsoleView.warn("Некорректный формат даты. Используйте формат YYYY-MM-DD.");
+            ConsoleView.warn("Некорректный формат даты. Используйте формат ГГГГ-ММ-ДД.");
         } catch (DomainException e) {
             ConsoleView.warn(e.getMessage());
         } catch (Exception e) {

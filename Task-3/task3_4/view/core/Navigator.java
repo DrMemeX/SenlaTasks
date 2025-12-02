@@ -7,10 +7,13 @@ import task3_4.view.util.ConsoleView;
 import task3_4.view.util.In;
 
 import java.util.List;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 public class Navigator {
 
     private Menu currentMenu;
+    private final Deque<Menu> history = new ArrayDeque<>();
 
     public Navigator() {
     }
@@ -29,8 +32,13 @@ public class Navigator {
                 );
 
                 if (choice == 0) {
-                    currentMenu = null;
-                    break;
+                    if (history.isEmpty()) {
+                        currentMenu = null;
+                        break;
+                    } else {
+                        currentMenu = history.pop();
+                        continue;
+                    }
                 }
 
                 navigate(choice);
@@ -50,7 +58,8 @@ public class Navigator {
             ConsoleView.info((i + 1) + ") " + items.get(i).getTitle());
         }
 
-        ConsoleView.info("0) Выход");
+        String zeroLabel = history.isEmpty() ? "Выход" : "Назад";
+        ConsoleView.info("0) " + zeroLabel);
         ConsoleView.hr();
     }
 
@@ -58,6 +67,7 @@ public class Navigator {
         MenuItem item = currentMenu.getItems().get(index - 1);
 
         if (item.getNextMenu() != null) {
+            history.push(currentMenu);
             currentMenu = item.getNextMenu();
         } else {
             item.doAction();

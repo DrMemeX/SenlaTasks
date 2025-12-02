@@ -1,5 +1,6 @@
 package task3_4.features.reports;
 
+import task3_4.config.BookstoreConfig;
 import task3_4.features.books.Book;
 import task3_4.features.books.BookService;
 import task3_4.common.status.BookStatus;
@@ -91,15 +92,17 @@ public class BookReportService {
         List<Book> books = bookService.getAllBooks();
         LocalDate now = LocalDate.now();
 
+        int months = BookstoreConfig.get().getOldBookMonths();
+
         List<Book> oldBooks = books.stream()
                 .filter(b -> b.getAddedDate() != null)
-                .filter(b -> ChronoUnit.MONTHS.between(b.getAddedDate(), now) > 6)
+                .filter(b -> ChronoUnit.MONTHS.between(b.getAddedDate(), now) > months)
                 .filter(b -> b.getStatus() == BookStatus.AVAILABLE)
                 .collect(Collectors.toList());
 
         if (oldBooks.isEmpty()) {
             ConsoleView.title("Залежавшиеся книги");
-            ConsoleView.warn("Нет книг, залежавшихся более 6 месяцев.");
+            ConsoleView.warn("Нет книг, залежавшихся более " + months + " месяцев.");
             return;
         }
 

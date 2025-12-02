@@ -1,14 +1,15 @@
-package task3_4.features.requests;
+package task3_4.cvs.applier;
 
 import task3_4.exceptions.csv.CsvMappingException;
 import task3_4.features.books.Book;
-import task3_4.features.orders.Order;
 import task3_4.features.books.BookRepository;
+import task3_4.features.orders.Order;
 import task3_4.features.orders.OrderRepository;
+import task3_4.features.requests.Request;
+import task3_4.features.requests.RequestCsvDto;
+import task3_4.features.requests.RequestRepository;
 
-import java.util.List;
-
-public class RequestCsvDtoApplier {
+public class RequestCsvDtoApplier extends AbstractCsvDtoApplier<RequestCsvDto, Request> {
 
     private final RequestRepository requestRepo;
     private final BookRepository bookRepo;
@@ -22,7 +23,8 @@ public class RequestCsvDtoApplier {
         this.orderRepo = orderRepo;
     }
 
-    public void apply(RequestCsvDto dto) {
+    @Override
+    public Request apply(RequestCsvDto dto) {
 
         Book book = bookRepo.findBookById(dto.bookId);
         if (book == null) {
@@ -56,23 +58,7 @@ public class RequestCsvDtoApplier {
 
             existing.getWaitingOrders().add(order);
         }
-    }
 
-
-    public void importRequestsFromCsv(String filePath,
-                                      RequestCsvImporter importer,
-                                      RequestCsvDtoApplier applier) {
-
-        List<RequestCsvDto> dtos = importer.importFrom(filePath);
-
-        for (RequestCsvDto dto : dtos) {
-            applier.apply(dto);
-        }
-    }
-
-    public void exportRequestsToCsv(String filePath,
-                                    RequestCsvExporter exporter) {
-
-        exporter.exportTo(filePath, requestRepo.findAllRequests());
+        return existing;
     }
 }

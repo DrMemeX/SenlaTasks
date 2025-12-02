@@ -1,6 +1,9 @@
 package task3_4.features.customers;
 
-public class Customer {
+import java.io.Serializable;
+
+public class Customer implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private static long nextId = 1;
 

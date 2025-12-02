@@ -1,15 +1,18 @@
-package task3_4.features.orders;
+package task3_4.cvs.applier;
 
 import task3_4.exceptions.csv.CsvMappingException;
 import task3_4.features.books.Book;
 import task3_4.features.books.BookService;
 import task3_4.features.customers.Customer;
 import task3_4.features.customers.CustomerService;
+import task3_4.features.orders.Order;
+import task3_4.features.orders.OrderCsvDto;
+import task3_4.features.orders.OrderRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderCsvDtoApplier {
+public class OrderCsvDtoApplier extends AbstractCsvDtoApplier<OrderCsvDto, Order> {
 
     private final OrderRepository orderRepository;
     private final CustomerService customerService;
@@ -23,6 +26,7 @@ public class OrderCsvDtoApplier {
         this.bookService = bookService;
     }
 
+    @Override
     public Order apply(OrderCsvDto dto) {
 
         Customer customer = customerService.getCustomerById(dto.customerId);

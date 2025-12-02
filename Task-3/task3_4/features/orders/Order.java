@@ -4,11 +4,13 @@ import task3_4.features.books.Book;
 import task3_4.features.customers.Customer;
 import task3_4.common.status.OrderStatus;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Order {
+public class Order implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private static long nextId = 1;
 

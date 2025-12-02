@@ -1,9 +1,12 @@
-package task3_4.features.books;
+package task3_4.cvs.applier;
 
 import task3_4.common.status.BookStatus;
 import task3_4.exceptions.csv.CsvMappingException;
+import task3_4.features.books.Book;
+import task3_4.features.books.BookCsvDto;
+import task3_4.features.books.BookRepository;
 
-public class BookCsvDtoApplier {
+public class BookCsvDtoApplier extends AbstractCsvDtoApplier<BookCsvDto, Book> {
 
     private final BookRepository bookRepo;
 
@@ -11,21 +14,18 @@ public class BookCsvDtoApplier {
         this.bookRepo = repo;
     }
 
+    @Override
     public Book apply(BookCsvDto dto) {
 
-        if (dto.title == null || dto.title.isBlank()) {
-            throw new CsvMappingException(
-                    "Ошибка маппинга книги ID=" + dto.id +
-                            ": пустой или отсутствующий title."
-            );
-        }
+        checkField(dto.title, new CsvMappingException(
+                "Ошибка маппинга книги ID=" + dto.id +
+                        ": пустой или отсутствующий title."
+        ));
 
-        if (dto.author == null || dto.author.isBlank()) {
-            throw new CsvMappingException(
-                    "Ошибка маппинга книги ID=" + dto.id +
-                            ": пустой или отсутствующий author."
-            );
-        }
+        checkField(dto.author, new CsvMappingException(
+                "Ошибка маппинга книги ID=" + dto.id +
+                        ": пустой или отсутствующий author."
+        ));
 
         if (dto.price < 0) {
             throw new CsvMappingException(

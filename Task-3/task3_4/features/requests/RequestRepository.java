@@ -25,4 +25,12 @@ public class RequestRepository {
     public boolean deleteRequestById(long id) {
         return requestList.removeIf(r -> r.getId() == id);
     }
+
+    public void restoreState(List<Request> requestState) {
+        if (requestState != null) {
+            requestList.clear();
+            requestList.addAll(requestState);
+        }
+    }
+
 }

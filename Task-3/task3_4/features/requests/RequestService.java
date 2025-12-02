@@ -1,6 +1,10 @@
 package task3_4.features.requests;
 
 import task3_4.common.status.BookStatus;
+import task3_4.config.BookstoreConfig;
+import task3_4.cvs.applier.RequestCsvDtoApplier;
+import task3_4.cvs.exporter.RequestCsvExporter;
+import task3_4.cvs.importer.RequestCsvImporter;
 import task3_4.exceptions.domain.DomainException;
 import task3_4.exceptions.domain.RequestNotFoundException;
 import task3_4.features.books.Book;
@@ -82,6 +86,12 @@ public class RequestService {
     public void fulfillRequest(Book arrivedBook) {
         if (arrivedBook == null) {
             throw new DomainException("Невозможно выполнить запрос: книга не указана.");
+        }
+
+        if (!BookstoreConfig.get().isAutoResolveRequestsEnabled()) {
+            throw new DomainException(
+                    "Автоматическое выполнение запросов при поступлении книги отключено настройками приложения."
+            );
         }
 
         Request request = findRequestByBook(arrivedBook);

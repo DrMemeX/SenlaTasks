@@ -32,4 +32,11 @@ public class CustomerRepository {
     public boolean deleteCustomerById(long id) {
         return customerList.removeIf(c -> c.getId() == id);
     }
+
+    public void restoreState(List<Customer> customerState) {
+        if (customerState != null) {
+            customerList.clear();
+            customerList.addAll(customerState);
+        }
+    }
 }
