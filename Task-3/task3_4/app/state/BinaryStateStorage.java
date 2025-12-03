@@ -7,11 +7,15 @@ import java.io.*;
 
 public class BinaryStateStorage {
 
-    private static final String STATE_FILE = "task3_4/app_state.bin";
+    private static final String STATE_FILE =
+            System.getProperty("user.dir")
+                    + File.separator + "Task-3"
+                    + File.separator + "task3_4"
+                    + File.separator + "app_state.bin";
 
     public void saveState(AppState state) {
-        File file = new File(STATE_FILE);
 
+        File file = new File(STATE_FILE);
         file.getParentFile().mkdirs();
 
         try (ObjectOutputStream oos =
