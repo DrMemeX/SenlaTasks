@@ -10,7 +10,7 @@ import java.util.List;
 
 public class AppState implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 12345L;
 
     private final List<Book> bookState;
     private final List<Customer> customerState;
