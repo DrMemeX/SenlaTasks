@@ -1,5 +1,8 @@
 package task3_4.features.reports;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.features.orders.Order;
 import task3_4.features.orders.OrderService;
 import task3_4.common.status.OrderStatus;
@@ -12,12 +15,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
+@Singleton
 public class OrderReportService {
 
-    private final OrderService orderService;
+    @Inject
+    private OrderService orderService;
 
-    public OrderReportService(OrderService orderService) {
-        this.orderService = orderService;
+    public OrderReportService() {
     }
 
     public void showOrdersSortedByCompletionDate(boolean ascending) {

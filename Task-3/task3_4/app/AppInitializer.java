@@ -1,5 +1,8 @@
 package task3_4.app;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.exceptions.app.AppInitializationException;
 import task3_4.features.books.*;
 import task3_4.features.customers.*;
@@ -11,14 +14,26 @@ import task3_4.view.util.ConsoleView;
 import java.time.LocalDate;
 import java.util.List;
 
+@Component
+@Singleton
 public class AppInitializer {
 
-    public static void initialize(
-            BookService bookService,
-            CustomerService customerService,
-            OrderService orderService,
-            RequestService requestService
-    ) {
+    @Inject
+    private BookService bookService;
+
+    @Inject
+    private CustomerService customerService;
+
+    @Inject
+    private OrderService orderService;
+
+    @Inject
+    private RequestService requestService;
+
+    public AppInitializer() {
+    }
+
+    public void initialize() {
 
         try {
             ConsoleView.title("Инициализация тестовых данных");

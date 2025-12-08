@@ -1,5 +1,8 @@
 package task3_4.features.books;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.cvs.applier.BookCsvDtoApplier;
 import task3_4.cvs.exporter.BookCsvExporter;
 import task3_4.cvs.importer.BookCsvImporter;
@@ -9,14 +12,17 @@ import task3_4.features.requests.RequestService;
 
 import java.util.List;
 
+@Component
+@Singleton
 public class BookService {
 
-    private final BookRepository repo;
-    private final RequestService requestService;
+    @Inject
+    private BookRepository repo;
 
-    public BookService(BookRepository repo, RequestService requestService) {
-        this.repo = repo;
-        this.requestService = requestService;
+    @Inject
+    private RequestService requestService;
+
+    public BookService() {
     }
 
     public BookRepository getBookRepository() {

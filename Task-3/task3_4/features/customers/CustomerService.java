@@ -1,5 +1,8 @@
 package task3_4.features.customers;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.cvs.applier.CustomerCsvDtoApplier;
 import task3_4.cvs.exporter.CustomerCsvExporter;
 import task3_4.cvs.importer.CustomerCsvImporter;
@@ -8,12 +11,14 @@ import task3_4.exceptions.domain.DomainException;
 
 import java.util.List;
 
+@Component
+@Singleton
 public class CustomerService {
 
-    private final CustomerRepository repo;
+    @Inject
+    private CustomerRepository repo;
 
-    public CustomerService(CustomerRepository repo) {
-        this.repo = repo;
+    public CustomerService() {
     }
 
     public CustomerRepository getRepo() {

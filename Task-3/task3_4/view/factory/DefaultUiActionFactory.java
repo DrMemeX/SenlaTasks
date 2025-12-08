@@ -1,5 +1,8 @@
 package task3_4.view.factory;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.features.books.BookService;
 import task3_4.features.customers.CustomerService;
 import task3_4.features.orders.OrderService;
@@ -20,30 +23,19 @@ import task3_4.view.action.orders.reports.*;
 import task3_4.view.action.requests.business.*;
 import task3_4.view.action.requests.reports.*;
 
+@Component
+@Singleton
 public class DefaultUiActionFactory implements IUiActionFactory {
 
-    private final BookService bookService;
-    private final CustomerService customerService;
-    private final OrderService orderService;
-    private final RequestService requestService;
-    private final BookReportService bookReportService;
-    private final OrderReportService orderReportService;
-    private final RequestReportService requestReportService;
+    @Inject private BookService bookService;
+    @Inject private CustomerService customerService;
+    @Inject private OrderService orderService;
+    @Inject private RequestService requestService;
+    @Inject private BookReportService bookReportService;
+    @Inject private OrderReportService orderReportService;
+    @Inject private RequestReportService requestReportService;
 
-    public DefaultUiActionFactory(BookService bookService,
-                                  CustomerService customerService,
-                                  OrderService orderService,
-                                  RequestService requestService,
-                                  BookReportService bookReportService,
-                                  OrderReportService orderReportService,
-                                  RequestReportService requestReportService) {
-        this.bookService = bookService;
-        this.customerService = customerService;
-        this.orderService = orderService;
-        this.requestService = requestService;
-        this.bookReportService = bookReportService;
-        this.orderReportService = orderReportService;
-        this.requestReportService = requestReportService;
+    public DefaultUiActionFactory() {
     }
 
     @Override

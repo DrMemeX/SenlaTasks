@@ -1,5 +1,8 @@
 package task3_4.features.requests;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.common.status.BookStatus;
 import task3_4.config.BookstoreConfig;
 import task3_4.cvs.applier.RequestCsvDtoApplier;
@@ -14,18 +17,23 @@ import task3_4.features.orders.OrderRepository;
 
 import java.util.List;
 
+@Component
+@Singleton
 public class RequestService {
 
-    private final RequestRepository requestRepo;
-    private final BookRepository bookRepo;
-    private final OrderRepository orderRepo;
+    @Inject
+    private RequestRepository requestRepo;
 
-    public RequestService(RequestRepository requestRepo,
-                          BookRepository bookRepo,
-                          OrderRepository orderRepo) {
-        this.requestRepo = requestRepo;
-        this.bookRepo = bookRepo;
-        this.orderRepo = orderRepo;
+    @Inject
+    private BookRepository bookRepo;
+
+    @Inject
+    private OrderRepository orderRepo;
+
+    @Inject
+    private BookstoreConfig config;
+
+    public RequestService() {
     }
 
     public RequestRepository getRequestRepository() {
@@ -88,7 +96,7 @@ public class RequestService {
             throw new DomainException("Невозможно выполнить запрос: книга не указана.");
         }
 
-        if (!BookstoreConfig.get().isAutoResolveRequestsEnabled()) {
+        if (!config.isAutoResolveRequestsEnabled()) {
             throw new DomainException(
                     "Автоматическое выполнение запросов при поступлении книги отключено настройками приложения."
             );

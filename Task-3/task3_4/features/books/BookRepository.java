@@ -1,8 +1,13 @@
 package task3_4.features.books;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Singleton
 public class BookRepository {
 
     private final List<Book> bookList = new ArrayList<>();

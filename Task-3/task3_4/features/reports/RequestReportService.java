@@ -1,5 +1,8 @@
 package task3_4.features.reports;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.features.books.Book;
 import task3_4.features.orders.Order;
 import task3_4.features.requests.Request;
@@ -10,12 +13,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
+@Singleton
 public class RequestReportService {
 
-    private final RequestService requestService;
+    @Inject
+    private RequestService requestService;
 
-    public RequestReportService(RequestService requestService) {
-        this.requestService = requestService;
+    public RequestReportService() {
     }
 
     public void showResolvedRequests() {

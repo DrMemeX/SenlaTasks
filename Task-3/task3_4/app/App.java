@@ -1,7 +1,9 @@
 package task3_4.app;
 
+import di_module.di_processor.DependencyInjector;
 import task3_4.app.state.AppState;
 import task3_4.app.state.BinaryStateStorage;
+import task3_4.config.BookstoreConfig;
 import task3_4.controller.ui.MenuController;
 import task3_4.exceptions.app.AppInitializationException;
 import task3_4.view.core.Builder;
@@ -21,10 +23,21 @@ public final class App {
 
     public static void run() {
 
-        BookRepository bookRepo = new BookRepository();
-        CustomerRepository customerRepo = new CustomerRepository();
-        OrderRepository orderRepo = new OrderRepository();
-        RequestRepository requestRepo = new RequestRepository();
+        DependencyInjector injector = new DependencyInjector();
+
+        BookstoreConfig config = injector.create(BookstoreConfig.class);
+
+        ConsoleView.title("Текущие настройки магазина");
+        ConsoleView.info("Авто-выполнение запросов: " +
+                (config.isAutoResolveRequestsEnabled() ? "ВКЛЮЧЕНО" : "ВЫКЛЮЧЕНО"));
+        ConsoleView.info("Книга считается «залежавшейся» через " +
+                config.getOldBookMonths() + " мес.");
+        ConsoleView.hr();
+
+        BookRepository bookRepo = injector.create(BookRepository.class);
+        CustomerRepository customerRepo = injector.create(CustomerRepository.class);
+        OrderRepository orderRepo = injector.create(OrderRepository.class);
+        RequestRepository requestRepo = injector.create(RequestRepository.class);
 
         BinaryStateStorage storage = new BinaryStateStorage();
         AppState loadedState = storage.loadState();
@@ -40,23 +53,19 @@ public final class App {
             ConsoleView.ok("Состояние восстановлено успешно!");
         }
 
-        RequestService requestService = new RequestService(requestRepo, bookRepo, orderRepo);
-        BookService bookService = new BookService(bookRepo, requestService);
-        CustomerService customerService = new CustomerService(customerRepo);
-        OrderService orderService = new OrderService(orderRepo, requestService, customerService, bookService);
+        BookService bookService = injector.create(BookService.class);
+        CustomerService customerService = injector.create(CustomerService.class);
+        OrderService orderService = injector.create(OrderService.class);
+        RequestService requestService = injector.create(RequestService.class);
 
-        BookReportService bookReportService = new BookReportService(bookService);
-        OrderReportService orderReportService = new OrderReportService(orderService);
-        RequestReportService requestReportService = new RequestReportService(requestService);
+        BookReportService bookReportService = injector.create(BookReportService.class);
+        OrderReportService orderReportService = injector.create(OrderReportService.class);
+        RequestReportService requestReportService = injector.create(RequestReportService.class);
 
         if (loadedState == null) {
             try {
-                AppInitializer.initialize(
-                        bookService,
-                        customerService,
-                        orderService,
-                        requestService
-                );
+                AppInitializer initializer = injector.create(AppInitializer.class);
+                initializer.initialize();
             } catch (AppInitializationException e) {
 
                 ConsoleView.warn("КРИТИЧЕСКАЯ ОШИБКА ЗАПУСКА ПРИЛОЖЕНИЯ");
@@ -71,20 +80,13 @@ public final class App {
             }
         }
 
-        IUiActionFactory factory = new DefaultUiActionFactory(
-                bookService,
-                customerService,
-                orderService,
-                requestService,
-                bookReportService,
-                orderReportService,
-                requestReportService
-        );
+        IUiActionFactory factory = injector.create(DefaultUiActionFactory.class);
 
         Builder builder = new Builder().buildMenu(factory.buildRootMenu());
 
         MenuController controller = new MenuController(builder, new Navigator());
         controller.run();
+
         AppState newState = new AppState(
                 bookRepo.findAllBooks(),
                 customerRepo.findAllCustomers(),
@@ -93,7 +95,6 @@ public final class App {
         );
 
         storage.saveState(newState);
-
         ConsoleView.ok("Работа завершена. Состояние сохранено.");
     }
 }

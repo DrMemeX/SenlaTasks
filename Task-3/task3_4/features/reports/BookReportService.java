@@ -1,5 +1,8 @@
 package task3_4.features.reports;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.config.BookstoreConfig;
 import task3_4.features.books.Book;
 import task3_4.features.books.BookService;
@@ -12,12 +15,17 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
+@Singleton
 public class BookReportService {
 
-    private final BookService bookService;
+    @Inject
+    private BookService bookService;
 
-    public BookReportService(BookService bookService) {
-        this.bookService = bookService;
+    @Inject
+    private BookstoreConfig config;
+
+    public BookReportService() {
     }
 
     public void showBooksSortedByTitle(boolean ascending) {
@@ -92,11 +100,11 @@ public class BookReportService {
         List<Book> books = bookService.getAllBooks();
         LocalDate now = LocalDate.now();
 
-        int months = BookstoreConfig.get().getOldBookMonths();
+        int months = config.getOldBookMonths();
 
         List<Book> oldBooks = books.stream()
                 .filter(b -> b.getAddedDate() != null)
-                .filter(b -> ChronoUnit.MONTHS.between(b.getAddedDate(), now) > months)
+                .filter(b -> b.getAddedDate().plusMonths(months).isBefore(now))
                 .filter(b -> b.getStatus() == BookStatus.AVAILABLE)
                 .collect(Collectors.toList());
 

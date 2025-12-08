@@ -1,8 +1,13 @@
 package task3_4.features.customers;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Singleton
 public class CustomerRepository {
 
     private final List<Customer> customerList = new ArrayList<>();

@@ -1,54 +1,55 @@
 package task3_4.config;
 
+import config_module.config_annotation.ConfigProperty;
+import config_module.config_processor.ConfigProcessor;
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Init;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.exceptions.config.ConfigException;
 import task3_4.exceptions.config.ConfigFileNotFoundException;
 import task3_4.view.util.ConsoleView;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
+@Component
+@Singleton
 public final class BookstoreConfig {
 
     private static final String CONFIG_FILE = "task3_4/config.properties";
-    private static final BookstoreConfig INSTANCE = new BookstoreConfig();
-
-    private final Properties props = new Properties();
 
     private static final int DEFAULT_OLD_BOOK_MONTHS = 6;
     private static final boolean DEFAULT_AUTO_RESOLVE_REQUESTS = true;
 
+    @Inject
+    private ConfigProcessor configProcessor;
+
+    @ConfigProperty(propertyName = "bookstore.oldBookMonths", type = String.class)
+    private String oldBookMonthsRaw;
+
+    @ConfigProperty(propertyName = "bookstore.autoResolveRequests", type = String.class)
+    private String autoResolveRequestsRaw;
+
+    private int oldBookMonths;
+    private boolean autoResolveRequestsEnabled;
+
     private BookstoreConfig() {
-        load();
     }
 
-    public static BookstoreConfig get() {
-        return INSTANCE;
-    }
-
-    private void load() {
-        try (InputStream in = BookstoreConfig.class
-                .getClassLoader()
-                .getResourceAsStream("task3_4/config.properties")) {
-
-            if (in == null) {
-                ConfigFileNotFoundException ex =
-                        new ConfigFileNotFoundException("task3_4/config.properties");
-                ConsoleView.warn(ex.getMessage());
-                return;
-            }
-
-            props.load(in);
-
-        } catch (IOException e) {
-            ConfigException ex =
-                    new ConfigException("Ошибка чтения файла конфигурации: task3_4/config.properties", e);
+    @Init
+    public void init() {
+        try {
+            configProcessor.configure(this, CONFIG_FILE);
+        } catch (RuntimeException e) {
+            ConfigFileNotFoundException ex =
+                    new ConfigFileNotFoundException(CONFIG_FILE);
             ConsoleView.warn(ex.getMessage());
         }
+
+        this.oldBookMonths = parseOldBookMonths();
+        this.autoResolveRequestsEnabled = parseAutoResolveRequests();
     }
 
-    public int getOldBookMonths() {
-        String raw = props.getProperty("bookstore.oldBookMonths");
+    private int parseOldBookMonths() {
+        String raw = oldBookMonthsRaw;
 
         if (raw == null || raw.isBlank()) {
             ConfigException ex = new ConfigException(
@@ -72,14 +73,13 @@ public final class BookstoreConfig {
         }
     }
 
-    public boolean isAutoResolveRequestsEnabled() {
-        String raw = props.getProperty("bookstore.autoResolveRequests");
+    private boolean parseAutoResolveRequests() {
+        String raw = autoResolveRequestsRaw;
 
         if (raw == null || raw.isBlank()) {
             ConfigException ex = new ConfigException(
                     "Отсутствует обязательное свойство 'bookstore.autoResolveRequests' в " + CONFIG_FILE +
-                            ". Используется значение по умолчанию: " +
-                            DEFAULT_AUTO_RESOLVE_REQUESTS
+                            ". Используется значение по умолчанию: " + DEFAULT_AUTO_RESOLVE_REQUESTS
             );
             ConsoleView.warn(ex.getMessage());
             return DEFAULT_AUTO_RESOLVE_REQUESTS;
@@ -98,5 +98,13 @@ public final class BookstoreConfig {
         );
         ConsoleView.warn(ex.getMessage());
         return DEFAULT_AUTO_RESOLVE_REQUESTS;
+    }
+
+    public int getOldBookMonths() {
+        return oldBookMonths;
+    }
+
+    public boolean isAutoResolveRequestsEnabled() {
+        return autoResolveRequestsEnabled;
     }
 }

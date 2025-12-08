@@ -1,8 +1,13 @@
 package task3_4.features.requests;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Singleton
 public class RequestRepository {
 
     private final List<Request> requestList = new ArrayList<>();

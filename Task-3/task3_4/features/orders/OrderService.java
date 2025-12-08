@@ -1,5 +1,8 @@
 package task3_4.features.orders;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
+import di_module.di_annotation.Singleton;
 import task3_4.common.status.BookStatus;
 import task3_4.common.status.OrderStatus;
 import task3_4.cvs.applier.OrderCsvDtoApplier;
@@ -18,21 +21,23 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Singleton
 public class OrderService {
 
-    private final OrderRepository repo;
-    private final RequestService requestService;
-    private final CustomerService customerService;
-    private final BookService bookService;
+    @Inject
+    private OrderRepository repo;
 
-    public OrderService(OrderRepository repo,
-                        RequestService requestService,
-                        CustomerService customerService,
-                        BookService bookService) {
-        this.repo = repo;
-        this.requestService = requestService;
-        this.customerService = customerService;
-        this.bookService = bookService;
+    @Inject
+    private RequestService requestService;
+
+    @Inject
+    private CustomerService customerService;
+
+    @Inject
+    private BookService bookService;
+
+    public OrderService() {
     }
 
     public OrderRepository getOrderRepository() {

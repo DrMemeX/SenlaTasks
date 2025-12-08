@@ -1,11 +1,16 @@
 package task3_4.features.orders;
 
+import di_module.di_annotation.Component;
+import di_module.di_annotation.Singleton;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
+@Singleton
 public class OrderRepository {
 
-    private final List<Order> orderList = new ArrayList<>();
+    private List<Order> orderList = new ArrayList<>();
 
     public List<Order> findAllOrders() {
         return orderList;
