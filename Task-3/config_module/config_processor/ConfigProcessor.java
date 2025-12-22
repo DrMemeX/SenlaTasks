@@ -82,7 +82,10 @@ public class ConfigProcessor {
         }
 
         if (fieldType == Object.class) {
-            return String.class;
+            throw new RuntimeException(
+                    "Поле типа Object требует указания type в @ConfigProperty: "
+                            + field.getDeclaringClass().getSimpleName() + "." + field.getName()
+            );
         }
         return fieldType;
     }
@@ -96,5 +99,4 @@ public class ConfigProcessor {
 
         throw new RuntimeException("Неизвестный тип: " + targetType.getName());
     }
-
 }

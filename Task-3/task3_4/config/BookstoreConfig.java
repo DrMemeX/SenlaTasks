@@ -22,10 +22,10 @@ public final class BookstoreConfig {
     @Inject
     private ConfigProcessor configProcessor;
 
-    @ConfigProperty(propertyName = "bookstore.oldBookMonths", type = String.class)
+    @ConfigProperty(propertyName = "bookstore.oldBookMonths")
     private String oldBookMonthsRaw;
 
-    @ConfigProperty(propertyName = "bookstore.autoResolveRequests", type = String.class)
+    @ConfigProperty(propertyName = "bookstore.autoResolveRequests")
     private String autoResolveRequestsRaw;
 
     private int oldBookMonths;
