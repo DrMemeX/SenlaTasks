@@ -1,47 +1,43 @@
 package task3_4.features.customers;
 
 import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
 import di_module.di_annotation.Singleton;
+import task3_4.dao.jdbc.CustomerJdbcDao;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Singleton
 public class CustomerRepository {
 
-    private final List<Customer> customerList = new ArrayList<>();
+    @Inject
+    private CustomerJdbcDao dao;
 
     public List<Customer> findAllCustomers() {
-        return customerList;
+        return dao.findAll();
     }
 
     public Customer findCustomerById(long id) {
-        return customerList.stream()
-                .filter(c -> c.getId() == id)
-                .findFirst()
-                .orElse(null);
+        return dao.findById(id).orElse(null);
     }
 
     public Customer findCustomerByEmail(String email) {
-        return customerList.stream()
-                .filter(c -> c.getEmail().equalsIgnoreCase(email))
-                .findFirst()
-                .orElse(null);
+        return dao.findByEmail(email).orElse(null);
     }
 
     public void addCustomer(Customer customer) {
-        customerList.add(customer);
+        dao.create(customer);
     }
 
     public boolean deleteCustomerById(long id) {
-        return customerList.removeIf(c -> c.getId() == id);
+        return dao.deleteById(id);
     }
 
     public void restoreState(List<Customer> customerState) {
-        if (customerState != null) {
-            customerList.clear();
-            customerList.addAll(customerState);
-        }
+    }
+
+    public void updateCustomer(Customer customer) {
+        dao.update(customer);
     }
 }

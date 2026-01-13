@@ -14,13 +14,13 @@ import task3_4.features.reports.RequestReportService;
 import task3_4.view.action.customers.buisness.*;
 import task3_4.view.menu.Menu;
 
-import task3_4.view.action.books.business.*;
+import task3_4.view.action.books.buisness.*;
 import task3_4.view.action.books.reports.*;
 
-import task3_4.view.action.orders.business.*;
+import task3_4.view.action.orders.buisness.*;
 import task3_4.view.action.orders.reports.*;
 
-import task3_4.view.action.requests.business.*;
+import task3_4.view.action.requests.buisness.*;
 import task3_4.view.action.requests.reports.*;
 
 @Component

@@ -1,7 +1,6 @@
-package task3_4.view.action.books.business;
+package task3_4.view.action.books.buisness;
 
 import task3_4.exceptions.csv.CsvException;
-import task3_4.exceptions.domain.DomainException;
 import task3_4.cvs.exporter.BookCsvExporter;
 import task3_4.features.books.BookService;
 import task3_4.view.action.IAction;
@@ -36,10 +35,6 @@ public class ExportBooksAction implements IAction {
 
         } catch (CsvException e) {
             ConsoleView.warn("Ошибка CSV: " + e.getMessage());
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Не удалось сохранить файл: " + e.getMessage());
         }
     }
 }

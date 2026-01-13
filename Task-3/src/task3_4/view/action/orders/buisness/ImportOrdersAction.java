@@ -1,4 +1,4 @@
-package task3_4.view.action.orders.business;
+package task3_4.view.action.orders.buisness;
 
 import task3_4.cvs.applier.OrderCsvDtoApplier;
 import task3_4.cvs.importer.OrderCsvImporter;
@@ -42,10 +42,6 @@ public class ImportOrdersAction implements IAction {
 
         } catch (CsvException e) {
             ConsoleView.warn("Ошибка CSV: " + e.getMessage());
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Не удалось выполнить импорт: " + e.getMessage());
         }
     }
 }

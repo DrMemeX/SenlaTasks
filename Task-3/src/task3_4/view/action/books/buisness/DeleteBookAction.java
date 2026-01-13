@@ -1,6 +1,6 @@
-package task3_4.view.action.books.business;
+package task3_4.view.action.books.buisness;
 
-import task3_4.exceptions.domain.DomainException;
+import task3_4.exceptions.ui.UserInputException;
 import task3_4.features.books.BookService;
 import task3_4.view.action.IAction;
 import task3_4.view.util.ConsoleView;
@@ -21,18 +21,14 @@ public class DeleteBookAction implements IAction {
 
     @Override
     public void execute() {
-
+        long id;
         try {
-            long id = Long.parseLong(In.get().line("Введите ID книги: "));
-
-            service.deleteBook(id);
-
-            ConsoleView.ok("Книга успешно удалена.");
-
+            id = Long.parseLong(In.get().line("Введите ID книги: "));
         } catch (NumberFormatException e) {
-            ConsoleView.warn("Некорректный формат числа.");
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
+            throw new UserInputException("Некорректный формат числа.");
         }
+
+        service.deleteBook(id);
+        ConsoleView.ok("Книга успешно удалена.");
     }
 }

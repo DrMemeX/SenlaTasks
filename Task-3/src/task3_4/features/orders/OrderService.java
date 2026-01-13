@@ -89,13 +89,14 @@ public class OrderService {
                 .sum();
         order.setTotalPrice(totalPrice);
 
+        repo.addOrder(order);
+
         for (Book book : books) {
             if (book.getStatus() == BookStatus.MISSING) {
                 requestService.createOrAppendRequest(book, order);
             }
         }
 
-        repo.addOrder(order);
         return order;
     }
 
@@ -110,26 +111,24 @@ public class OrderService {
 
     public void updateOrder(Order incoming) {
         Order existing = repo.findOrderById(incoming.getId());
-        if (existing == null) {
-            throw new OrderNotFoundException(incoming.getId());
-        }
+        if (existing == null) throw new OrderNotFoundException(incoming.getId());
 
         existing.setOrderedBooks(new ArrayList<>(incoming.getOrderedBooks()));
         existing.setCustomer(incoming.getCustomer());
         existing.setStatus(incoming.getStatus());
         existing.setCompletionDate(incoming.getCompletionDate());
         existing.setTotalPrice(incoming.getTotalPrice());
+
+        repo.updateOrder(existing);
     }
 
     public void attachCustomer(long orderId, Customer customer) {
         Order order = repo.findOrderById(orderId);
-        if (order == null) {
-            throw new OrderNotFoundException(orderId);
-        }
-        if (customer == null) {
-            throw new DomainException("Невозможно привязать к заказу пустого клиента.");
-        }
+        if (order == null) throw new OrderNotFoundException(orderId);
+        if (customer == null) throw new DomainException("Невозможно привязать к заказу пустого клиента.");
+
         order.setCustomer(customer);
+        repo.updateOrder(order);
     }
 
 
@@ -163,6 +162,8 @@ public class OrderService {
 
         order.setStatus(OrderStatus.COMPLETED);
         order.setCompletionDate(LocalDate.now());
+
+        repo.updateOrder(order);
     }
 
     public void cancelOrder(long id) {
@@ -185,6 +186,8 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELLED);
+
+        repo.updateOrder(order);
     }
 
 

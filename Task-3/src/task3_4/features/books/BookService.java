@@ -3,6 +3,7 @@ package task3_4.features.books;
 import di_module.di_annotation.Component;
 import di_module.di_annotation.Inject;
 import di_module.di_annotation.Singleton;
+import task3_4.features.books.BookCsvDto;
 import task3_4.cvs.applier.BookCsvDtoApplier;
 import task3_4.cvs.exporter.BookCsvExporter;
 import task3_4.cvs.importer.BookCsvImporter;
@@ -64,7 +65,6 @@ public class BookService {
         try {
             requestService.fulfillRequest(book);
         } catch (Exception ignored) {
-
         }
     }
 
@@ -88,6 +88,8 @@ public class BookService {
         existing.setReleaseDate(incoming.getReleaseDate());
         existing.setAddedDate(incoming.getAddedDate());
         existing.setDescription(incoming.getDescription());
+
+        repo.updateBook(existing);
     }
 
     public void importBooksFromCsv(String filePath,

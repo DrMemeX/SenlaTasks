@@ -1,6 +1,5 @@
 package task3_4.view.action.customers.buisness;
 
-import task3_4.exceptions.domain.DomainException;
 import task3_4.features.customers.Customer;
 import task3_4.features.customers.CustomerService;
 import task3_4.view.action.IAction;
@@ -22,37 +21,28 @@ public class UpdateCustomerAction implements IAction {
 
     @Override
     public void execute() {
+        long id = In.get().intInRange(
+                "Введите ID клиента: ",
+                1,
+                Integer.MAX_VALUE
+        );
 
-        try {
-            long id = In.get().intInRange(
-                    "Введите ID клиента: ",
-                    1,
-                    Integer.MAX_VALUE
-            );
+        Customer existing = service.getCustomerById(id);
 
-            Customer existing = service.getCustomerById(id);
+        String name = In.get().line("Имя (" + existing.getName() + "): ");
+        String phone = In.get().line("Телефон (" + existing.getPhone() + "): ");
+        String email = In.get().line("Email (" + existing.getEmail() + "): ");
+        String address = In.get().line("Адрес (" + existing.getAddress() + "): ");
 
-            String name = In.get().line("Имя (" + existing.getName() + "): ");
-            String phone = In.get().line("Телефон (" + existing.getPhone() + "): ");
-            String email = In.get().line("Email (" + existing.getEmail() + "): ");
-            String address = In.get().line("Адрес (" + existing.getAddress() + "): ");
+        Customer updated = new Customer(
+                id,
+                name.isBlank() ? existing.getName() : name,
+                phone.isBlank() ? existing.getPhone() : phone,
+                email.isBlank() ? existing.getEmail() : email,
+                address.isBlank() ? existing.getAddress() : address
+        );
 
-            Customer updated = new Customer(
-                    id,
-                    name.isBlank()   ? existing.getName()   : name,
-                    phone.isBlank()  ? existing.getPhone()  : phone,
-                    email.isBlank()  ? existing.getEmail()  : email,
-                    address.isBlank()? existing.getAddress(): address
-            );
-
-            service.updateCustomer(updated);
-
-            ConsoleView.ok("Данные клиента обновлены.");
-
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Ошибка при обновлении данных клиента: " + e.getMessage());
-        }
+        service.updateCustomer(updated);
+        ConsoleView.ok("Данные клиента обновлены.");
     }
 }

@@ -64,10 +64,7 @@ public class RequestService {
         if (book == null) {
             throw new DomainException("Невозможно найти запрос: книга не указана.");
         }
-        return requestRepo.findAllRequests().stream()
-                .filter(r -> r.getBook().equals(book))
-                .findFirst()
-                .orElse(null);
+        return requestRepo.findRequestByBook(book);
     }
 
     public Request createOrAppendRequest(Book missingBook, Order waitingOrder) {
@@ -81,6 +78,7 @@ public class RequestService {
         Request existing = findRequestByBook(missingBook);
         if (existing != null) {
             existing.addWaitingOrder(waitingOrder);
+            requestRepo.updateRequest(existing);
             return existing;
         }
 
@@ -111,7 +109,9 @@ public class RequestService {
 
         if (!request.isResolved()) {
             request.resolve();
+            requestRepo.updateRequest(request);
             arrivedBook.setStatus(BookStatus.AVAILABLE);
+            bookRepo.updateBook(arrivedBook);
         } else {
             throw new DomainException(
                     "Запрос ID=" + request.getId() + " уже выполнен."
@@ -141,6 +141,8 @@ public class RequestService {
 
         existing.getWaitingOrders().clear();
         existing.getWaitingOrders().addAll(incoming.getWaitingOrders());
+
+        requestRepo.updateRequest(existing);
     }
 
     public void completeRequest(long id) {
@@ -155,6 +157,8 @@ public class RequestService {
         }
 
         r.setResolved(true);
+
+        requestRepo.updateRequest(r);
     }
 
     public void importRequestsFromCsv(String filePath,

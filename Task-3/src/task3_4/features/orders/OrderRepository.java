@@ -1,41 +1,39 @@
 package task3_4.features.orders;
 
 import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
 import di_module.di_annotation.Singleton;
+import task3_4.dao.jdbc.OrderJdbcDao;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Singleton
 public class OrderRepository {
 
-    private List<Order> orderList = new ArrayList<>();
+    @Inject
+    private OrderJdbcDao dao;
 
     public List<Order> findAllOrders() {
-        return orderList;
+        return dao.findAll();
     }
 
     public Order findOrderById(long id) {
-        return orderList.stream()
-                .filter(o -> o.getId() == id)
-                .findFirst()
-                .orElse(null);
+        return dao.findById(id).orElse(null);
     }
 
     public void addOrder(Order order) {
-        orderList.add(order);
+        dao.create(order);
     }
 
     public boolean deleteOrderById(long id) {
-        return orderList.removeIf(o -> o.getId() == id);
+        return dao.deleteById(id);
     }
 
     public void restoreState(List<Order> orderState) {
-        if (orderState != null) {
-            orderList.clear();
-            orderList.addAll(orderState);
-        }
     }
 
+    public void updateOrder(Order order) {
+        dao.update(order);
+    }
 }

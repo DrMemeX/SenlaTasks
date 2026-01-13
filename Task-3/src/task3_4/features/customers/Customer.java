@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class Customer implements Serializable {
     private static final long serialVersionUID = 12L;
 
-    private static long nextId = 1;
+//    private static long nextId = 1;
 
     private long id;
     private String name;
@@ -17,7 +17,7 @@ public class Customer implements Serializable {
                     String phone,
                     String email,
                     String address) {
-        this.id = nextId++;
+//        this.id = nextId++;
 
         this.name = name;
         this.phone = phone;
@@ -37,21 +37,25 @@ public class Customer implements Serializable {
         this.email = email;
         this.address = address;
 
-        if (id >= nextId) {
-            nextId = id + 1;
-        }
+//        if (id >= nextId) {
+//            nextId = id + 1;
+//        }
     }
 
     public long getId() { return id; }
-    public static long getNextId() { return nextId; }
+//    public static long getNextId() { return nextId; }
 
     public void setId(long id) {
         this.id = id;
-        if (id >= nextId) {
-            nextId = id + 1;
-        }
+//        if (id >= nextId) {
+//            nextId = id + 1;
+//        }
     }
-    public static void setNextId(long nextId) { Customer.nextId = nextId; }
+//    public static void setNextId(long nextId) { Customer.nextId = nextId; }
+
+    public boolean isNew() {
+        return id == 0;
+    }
 
     public String getName() { return name; }
     public String getPhone() { return phone; }
@@ -65,7 +69,9 @@ public class Customer implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Клиент #%d: %s, тел: %s, email: %s, адрес: %s",
-                id, name, phone, email, address);
+        return String.format(
+                "Клиент #%d: %s, тел: %s, email: %s, адрес: %s",
+                id, name, phone, email, address
+        );
     }
 }

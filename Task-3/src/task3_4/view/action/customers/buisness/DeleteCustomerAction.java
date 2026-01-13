@@ -1,6 +1,5 @@
 package task3_4.view.action.customers.buisness;
 
-import task3_4.exceptions.domain.DomainException;
 import task3_4.features.customers.CustomerService;
 import task3_4.view.action.IAction;
 import task3_4.view.util.ConsoleView;
@@ -21,22 +20,13 @@ public class DeleteCustomerAction implements IAction {
 
     @Override
     public void execute() {
+        long id = In.get().intInRange(
+                "Введите ID клиента: ",
+                1,
+                Integer.MAX_VALUE
+        );
 
-        try {
-            long id = In.get().intInRange(
-                    "Введите ID клиента: ",
-                    1,
-                    Integer.MAX_VALUE
-            );
-
-            service.deleteCustomer(id);
-
-            ConsoleView.ok("Клиент успешно удалён.");
-
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Ошибка при удалении клиента: " + e.getMessage());
-        }
+        service.deleteCustomer(id);
+        ConsoleView.ok("Клиент успешно удалён.");
     }
 }

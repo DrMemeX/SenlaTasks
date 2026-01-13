@@ -10,8 +10,13 @@ public enum BookStatus {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
+    public String toDb() {
+        return name();
+    }
+
+    public static BookStatus fromDb(String value) {
+        if (value == null) return null;
+        return BookStatus.valueOf(value.trim().toUpperCase());
     }
 
     @Override

@@ -1,6 +1,10 @@
 package task3_4.view.menu;
 
+import task3_4.exceptions.dao.DaoException;
+import task3_4.exceptions.domain.DomainException;
+import task3_4.exceptions.ui.UserInputException;
 import task3_4.view.action.IAction;
+import task3_4.view.util.ConsoleView;
 
 public class MenuItem {
     private final String title;
@@ -20,8 +24,17 @@ public class MenuItem {
     public void setNextMenu(Menu nextMenu) {this.nextMenu = nextMenu;}
 
     public void doAction() {
-        if(action != null) {
+        if (action == null) return;
+
+        try {
             action.execute();
+        } catch (UserInputException | DomainException e) {
+            ConsoleView.warn(e.getMessage());
+        } catch (DaoException e) {
+            ConsoleView.warn("Ошибка базы данных: " + e.getMessage());
+        } catch (RuntimeException e) {
+            ConsoleView.warn("Непредвиденная ошибка: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

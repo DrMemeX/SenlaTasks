@@ -1,8 +1,6 @@
 package task3_4.app;
 
 import di_module.di_processor.DependencyInjector;
-import task3_4.app.state.AppState;
-import task3_4.app.state.BinaryStateStorage;
 import task3_4.config.BookstoreConfig;
 import task3_4.controller.ui.MenuController;
 import task3_4.exceptions.app.AppInitializationException;
@@ -39,20 +37,6 @@ public final class App {
         OrderRepository orderRepo = injector.create(OrderRepository.class);
         RequestRepository requestRepo = injector.create(RequestRepository.class);
 
-        BinaryStateStorage storage = new BinaryStateStorage();
-        AppState loadedState = storage.loadState();
-
-        if (loadedState != null) {
-            ConsoleView.info("Восстанавливаю состояние из файла...");
-
-            bookRepo.restoreState(loadedState.getBookState());
-            customerRepo.restoreState(loadedState.getCustomerState());
-            orderRepo.restoreState(loadedState.getOrderState());
-            requestRepo.restoreState(loadedState.getRequestState());
-
-            ConsoleView.ok("Состояние восстановлено успешно!");
-        }
-
         BookService bookService = injector.create(BookService.class);
         CustomerService customerService = injector.create(CustomerService.class);
         OrderService orderService = injector.create(OrderService.class);
@@ -62,10 +46,19 @@ public final class App {
         OrderReportService orderReportService = injector.create(OrderReportService.class);
         RequestReportService requestReportService = injector.create(RequestReportService.class);
 
-        if (loadedState == null) {
+
+        boolean dbHasData =
+                !bookService.getAllBooks().isEmpty()
+                        || !customerService.getAllCustomers().isEmpty()
+                        || !orderService.getAllOrders().isEmpty()
+                        || !requestService.getAllRequests().isEmpty();
+
+        if (!dbHasData) {
+            ConsoleView.title("Инициализация тестовых данных");
             try {
                 AppInitializer initializer = injector.create(AppInitializer.class);
                 initializer.initialize();
+                ConsoleView.ok("Тестовые данные загружены.");
             } catch (AppInitializationException e) {
 
                 ConsoleView.warn("КРИТИЧЕСКАЯ ОШИБКА ЗАПУСКА ПРИЛОЖЕНИЯ");
@@ -78,6 +71,9 @@ public final class App {
                 ConsoleView.warn("Приложение будет завершено.");
                 return;
             }
+        } else {
+            ConsoleView.info("Данные уже есть в БД — пропускаю инициализацию.");
+            ConsoleView.hr();
         }
 
         IUiActionFactory factory = injector.create(DefaultUiActionFactory.class);
@@ -87,14 +83,6 @@ public final class App {
         MenuController controller = new MenuController(builder, new Navigator());
         controller.run();
 
-        AppState newState = new AppState(
-                bookRepo.findAllBooks(),
-                customerRepo.findAllCustomers(),
-                orderRepo.findAllOrders(),
-                requestRepo.findAllRequests()
-        );
-
-        storage.saveState(newState);
-        ConsoleView.ok("Работа завершена. Состояние сохранено.");
+        ConsoleView.ok("Работа завершена.");
     }
 }

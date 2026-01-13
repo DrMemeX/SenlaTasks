@@ -11,8 +11,13 @@ public enum OrderStatus {
         this.description = description;
     }
 
-    public String getDescription() {
-        return description;
+    public String toDb() {
+        return name();
+    }
+
+    public static OrderStatus fromDb(String value) {
+        if (value == null) return null;
+        return OrderStatus.valueOf(value.trim().toUpperCase());
     }
 
     @Override

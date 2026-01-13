@@ -84,6 +84,8 @@ public class CustomerService {
         existing.setPhone(incoming.getPhone());
         existing.setEmail(incoming.getEmail());
         existing.setAddress(incoming.getAddress());
+
+        repo.updateCustomer(existing);
     }
 
     public void importCustomersFromCsv(String filePath,

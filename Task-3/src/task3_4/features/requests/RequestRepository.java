@@ -1,41 +1,46 @@
 package task3_4.features.requests;
 
 import di_module.di_annotation.Component;
+import di_module.di_annotation.Inject;
 import di_module.di_annotation.Singleton;
+import task3_4.dao.jdbc.RequestJdbcDao;
+import task3_4.features.books.Book;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Singleton
 public class RequestRepository {
 
-    private final List<Request> requestList = new ArrayList<>();
+    @Inject
+    private RequestJdbcDao dao;
 
     public List<Request> findAllRequests() {
-        return requestList;
+        return dao.findAll();
     }
 
     public Request findRequestById(long id) {
-        return requestList.stream()
-                .filter(r -> r.getId() == id)
-                .findFirst()
-                .orElse(null);
+        return dao.findById(id).orElse(null);
     }
 
     public void addRequest(Request request) {
-        requestList.add(request);
+        dao.create(request);
     }
 
     public boolean deleteRequestById(long id) {
-        return requestList.removeIf(r -> r.getId() == id);
+        return dao.deleteById(id);
     }
 
     public void restoreState(List<Request> requestState) {
-        if (requestState != null) {
-            requestList.clear();
-            requestList.addAll(requestState);
-        }
     }
 
+    public Request findRequestByBook(Book book) {
+        if (book == null) return null;
+        if (book.getId() == 0) return null;
+        return dao.findByBookId(book.getId()).orElse(null);
+    }
+
+    public void updateRequest(Request request) {
+        dao.update(request);
+    }
 }

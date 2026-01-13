@@ -22,29 +22,20 @@ public class AddCustomerAction implements IAction {
 
     @Override
     public void execute() {
+        String name = In.get().line("Введите имя: ");
+        String phone = In.get().line("Введите телефон: ");
+        String email = In.get().line("Введите email: ");
+        String address = In.get().line("Введите адрес: ");
 
-        try {
-            String name = In.get().line("Введите имя: ");
-            String phone = In.get().line("Введите телефон: ");
-            String email = In.get().line("Введите email: ");
-            String address = In.get().line("Введите адрес: ");
+        Customer c = new Customer(
+                0,
+                name,
+                phone,
+                email,
+                address
+        );
 
-            Customer c = new Customer(
-                    0,
-                    name,
-                    phone,
-                    email,
-                    address
-            );
-
-            service.addCustomer(c);
-
-            ConsoleView.ok("Клиент успешно добавлен!");
-
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Ошибка при добавлении клиента: " + e.getMessage());
-        }
+        service.addCustomer(c);
+        ConsoleView.ok("Клиент успешно добавлен!");
     }
 }

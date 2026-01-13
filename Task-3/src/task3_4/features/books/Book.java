@@ -8,7 +8,7 @@ import java.time.LocalDate;
 public class Book implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private static long nextId = 1;
+    //private static long nextId = 1;
 
     private long id;
     private String title;
@@ -26,7 +26,7 @@ public class Book implements Serializable {
                 LocalDate releaseDate,
                 LocalDate addedDate,
                 String description) {
-        this.id = nextId++;
+        //this.id = nextId++;
 
         this.title = title;
         this.author = author;
@@ -55,20 +55,24 @@ public class Book implements Serializable {
         this.addedDate = addedDate;
         this.description = description;
 
-        if (id >= nextId) {
-            nextId = id + 1;
-        }
+//        if (id >= nextId) {
+//            nextId = id + 1;
+//        }
     }
 
     public long getId() {return id;}
     public void setId(long id) {
         this.id = id;
-        if (id >= nextId) {
-            nextId = id + 1;
-        }
+//        if (id >= nextId) {
+//            nextId = id + 1;
+//        }
     }
 
-    public static long getNextId() {return nextId;}
+    public boolean isNew() {
+        return id == 0;
+    }
+
+//    public static long getNextId() {return nextId;}
     public String getTitle() { return title; }
     public String getAuthor() { return author; }
     public double getPrice() { return price; }
@@ -77,7 +81,7 @@ public class Book implements Serializable {
     public LocalDate getAddedDate() { return addedDate; }
     public String getDescription() { return description; }
 
-    public static void setNextId(long nextId) {Book.nextId = nextId;}
+//    public static void setNextId(long nextId) {Book.nextId = nextId;}
     public void setTitle(String title) { this.title = title; }
     public void setAuthor(String author) { this.author = author; }
     public void setPrice(double price) { this.price = price; }
@@ -88,7 +92,9 @@ public class Book implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Книга: «%s»\nАвтор: %s\nЦена: %.2f руб.\nСтатус: %s\n",
-                title, author, price, status);
+        return String.format(
+                "Книга #%d: «%s»\nАвтор: %s\nЦена: %.2f руб.\nСтатус: %s\n",
+                id, title, author, price, status
+        );
     }
 }

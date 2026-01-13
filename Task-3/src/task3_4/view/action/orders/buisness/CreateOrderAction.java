@@ -1,4 +1,4 @@
-package task3_4.view.action.orders.business;
+package task3_4.view.action.orders.buisness;
 
 import task3_4.exceptions.domain.DomainException;
 import task3_4.features.books.Book;
@@ -62,23 +62,10 @@ public class CreateOrderAction implements IAction {
             return;
         }
 
-        try {
-            long customerId = In.get().intInRange(
-                    "Введите ID покупателя: ",
-                    1,
-                    Integer.MAX_VALUE
-            );
+        long customerId = In.get().intInRange("Введите ID покупателя: ", 1, Integer.MAX_VALUE);
+        Customer c = customerService.getCustomerById(customerId);
 
-            Customer c = customerService.getCustomerById(customerId);
-
-            orderService.createOrder(books, c);
-
-            ConsoleView.ok("Заказ успешно создан!");
-
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Ошибка при создании заказа: " + e.getMessage());
-        }
+        orderService.createOrder(books, c);
+        ConsoleView.ok("Заказ успешно создан!");
     }
 }

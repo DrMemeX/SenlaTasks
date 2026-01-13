@@ -1,7 +1,6 @@
-package task3_4.view.action.books.business;
+package task3_4.view.action.books.buisness;
 
 import task3_4.exceptions.csv.CsvException;
-import task3_4.exceptions.domain.DomainException;
 import task3_4.cvs.applier.BookCsvDtoApplier;
 import task3_4.cvs.importer.BookCsvImporter;
 import task3_4.features.books.BookService;
@@ -38,10 +37,6 @@ public class ImportBooksAction implements IAction {
 
         } catch (CsvException e) {
             ConsoleView.warn("Ошибка CSV: " + e.getMessage());
-        } catch (DomainException e) {
-            ConsoleView.warn(e.getMessage());
-        } catch (Exception e) {
-            ConsoleView.warn("Не удалось выполнить импорт: " + e.getMessage());
         }
     }
 }
