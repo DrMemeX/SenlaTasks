@@ -8,14 +8,14 @@ import task3_4.dao.mapper.CustomerRowMapper;
 import task3_4.exceptions.dao.DaoException;
 import task3_4.features.customers.Customer;
 
-import java.sql.*;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 @Component
 @Singleton
-public class CustomerJdbcDao implements GenericDao<Customer, Long> {
+public class CustomerJdbcDao extends AbstractJdbcDao implements GenericDao<Customer, Long> {
 
     private static final String SQL_FIND_BY_ID =
             "SELECT id, name, phone, email, address FROM customers WHERE id = ?";
@@ -42,75 +42,99 @@ public class CustomerJdbcDao implements GenericDao<Customer, Long> {
     public Customer create(Customer entity) {
         if (entity == null) throw new DaoException("Ошибка: customer=null");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_INSERT)) {
-
-            ps.setString(1, entity.getName());
-            ps.setString(2, entity.getPhone());
-            ps.setString(3, entity.getEmail());
-            ps.setString(4, entity.getAddress());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new DaoException("INSERT не вернул id: " + entity);
-                entity.setId(rs.getLong(1));
-                return entity;
-            }
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return create(c, entity);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка создания клиента: " + entity, e);
+            throw new DaoException("Ошибка получения соединения при создании клиента", e);
         }
+    }
+
+    public Customer create(Connection c, Customer entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (entity == null) throw new DaoException("Ошибка: customer=null");
+
+        long id = insertReturningId(
+                c,
+                SQL_INSERT,
+                ps -> {
+                    ps.setString(1, entity.getName());
+                    ps.setString(2, entity.getPhone());
+                    ps.setString(3, entity.getEmail());
+                    ps.setString(4, entity.getAddress());
+                },
+                "Ошибка создания клиента: " + entity
+        );
+
+        entity.setId(id);
+        return entity;
     }
 
     @Override
     public Optional<Customer> findById(Long id) {
         if (id == null) throw new DaoException("Ошибка: id=null");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_BY_ID)) {
-
-            ps.setLong(1, id);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-                return Optional.of(mapper.map(rs));
-            }
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findById(c, id);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения клиента по id=" + id, e);
+            throw new DaoException("Ошибка получения соединения при чтении клиента id=" + id, e);
         }
+    }
+
+    public Optional<Customer> findById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        return queryOne(
+                c,
+                SQL_FIND_BY_ID,
+                ps -> ps.setLong(1, id),
+                mapper,
+                "Ошибка чтения клиента по id=" + id
+        );
     }
 
     @Override
     public List<Customer> findAll() {
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_ALL);
-             ResultSet rs = ps.executeQuery()) {
-
-            List<Customer> res = new ArrayList<>();
-            while (rs.next()) res.add(mapper.map(rs));
-            return res;
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findAll(c);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения списка клиентов", e);
+            throw new DaoException("Ошибка получения соединения при чтении списка клиентов", e);
         }
+    }
+
+    public List<Customer> findAll(Connection c) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+
+        return queryList(
+                c,
+                SQL_FIND_ALL,
+                null,
+                mapper,
+                "Ошибка чтения списка клиентов"
+        );
     }
 
     public Optional<Customer> findByEmail(String email) {
         if (email == null) throw new DaoException("Ошибка: email=null");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_BY_EMAIL)) {
-
-            ps.setString(1, email);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-                return Optional.of(mapper.map(rs));
-            }
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findByEmail(c, email);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения клиента по email=" + email, e);
+            throw new DaoException("Ошибка получения соединения при чтении клиента по email=" + email, e);
         }
+    }
+
+    public Optional<Customer> findByEmail(Connection c, String email) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (email == null) throw new DaoException("Ошибка: email=null");
+
+        return queryOne(
+                c,
+                SQL_FIND_BY_EMAIL,
+                ps -> ps.setString(1, email),
+                mapper,
+                "Ошибка чтения клиента по email=" + email
+        );
     }
 
     @Override
@@ -118,37 +142,56 @@ public class CustomerJdbcDao implements GenericDao<Customer, Long> {
         if (entity == null) throw new DaoException("Ошибка: customer=null");
         if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить клиента без id");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_UPDATE)) {
-
-            ps.setString(1, entity.getName());
-            ps.setString(2, entity.getPhone());
-            ps.setString(3, entity.getEmail());
-            ps.setString(4, entity.getAddress());
-            ps.setLong(5, entity.getId());
-
-            int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Клиент не найден для обновления, id=" + entity.getId());
-            return entity;
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return update(c, entity);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка обновления клиента id=" + entity.getId(), e);
+            throw new DaoException("Ошибка получения соединения при обновлении клиента id=" + entity.getId(), e);
         }
+    }
+
+    public Customer update(Connection c, Customer entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (entity == null) throw new DaoException("Ошибка: customer=null");
+        if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить клиента без id");
+
+        int updated = execUpdate(
+                c,
+                SQL_UPDATE,
+                ps -> {
+                    ps.setString(1, entity.getName());
+                    ps.setString(2, entity.getPhone());
+                    ps.setString(3, entity.getEmail());
+                    ps.setString(4, entity.getAddress());
+                    ps.setLong(5, entity.getId());
+                },
+                "Ошибка обновления клиента id=" + entity.getId()
+        );
+
+        if (updated == 0) throw new DaoException("Клиент не найден для обновления, id=" + entity.getId());
+        return entity;
     }
 
     @Override
     public boolean deleteById(Long id) {
         if (id == null) throw new DaoException("Ошибка: id=null");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_DELETE_BY_ID)) {
-
-            ps.setLong(1, id);
-            return ps.executeUpdate() > 0;
-
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return deleteById(c, id);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка удаления клиента id=" + id, e);
+            throw new DaoException("Ошибка получения соединения при удалении клиента id=" + id, e);
         }
     }
-}
 
+    public boolean deleteById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        int deleted = execUpdate(
+                c,
+                SQL_DELETE_BY_ID,
+                ps -> ps.setLong(1, id),
+                "Ошибка удаления клиента id=" + id
+        );
+        return deleted > 0;
+    }
+}

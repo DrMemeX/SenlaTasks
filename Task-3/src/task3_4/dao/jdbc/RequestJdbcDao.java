@@ -2,6 +2,7 @@ package task3_4.dao.jdbc;
 
 import di_module.di_annotation.Component;
 import di_module.di_annotation.Singleton;
+import task3_4.common.status.BookStatus;
 import task3_4.dao.db.DataSource;
 import task3_4.dao.generic.GenericDao;
 import task3_4.dao.mapper.BookRowMapper;
@@ -12,7 +13,6 @@ import task3_4.features.orders.Order;
 import task3_4.features.requests.Request;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -23,7 +23,7 @@ import java.util.Optional;
 
 @Component
 @Singleton
-public class RequestJdbcDao implements GenericDao<Request, Long> {
+public class RequestJdbcDao extends AbstractJdbcDao implements GenericDao<Request, Long> {
 
     private static final String SQL_INSERT_REQUEST =
             "INSERT INTO requests (book_id, resolved) VALUES (?, ?) RETURNING id";
@@ -34,7 +34,8 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
     private static final String SQL_FIND_REQUEST_BY_ID =
             "SELECT " +
                     "r.id AS r_id, r.book_id, r.resolved, " +
-                    "b.id, b.title, b.author, b.price, b.status, b.release_date, b.added_date, b.description " +
+                    "b.id AS b_id, b.title AS b_title, b.author AS b_author, b.price AS b_price, " +
+                    "b.status AS b_status, b.release_date AS b_release_date, b.added_date AS b_added_date, b.description AS b_description " +
                     "FROM requests r " +
                     "LEFT JOIN books b ON b.id = r.book_id " +
                     "WHERE r.id = ?";
@@ -42,7 +43,8 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
     private static final String SQL_FIND_ALL_REQUESTS =
             "SELECT " +
                     "r.id AS r_id, r.book_id, r.resolved, " +
-                    "b.id, b.title, b.author, b.price, b.status, b.release_date, b.added_date, b.description " +
+                    "b.id AS b_id, b.title AS b_title, b.author AS b_author, b.price AS b_price, " +
+                    "b.status AS b_status, b.release_date AS b_release_date, b.added_date AS b_added_date, b.description AS b_description " +
                     "FROM requests r " +
                     "LEFT JOIN books b ON b.id = r.book_id " +
                     "ORDER BY r.id";
@@ -50,7 +52,8 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
     private static final String SQL_FIND_REQUEST_BY_BOOK_ID =
             "SELECT " +
                     "r.id AS r_id, r.book_id, r.resolved, " +
-                    "b.id, b.title, b.author, b.price, b.status, b.release_date, b.added_date, b.description " +
+                    "b.id AS b_id, b.title AS b_title, b.author AS b_author, b.price AS b_price, " +
+                    "b.status AS b_status, b.release_date AS b_release_date, b.added_date AS b_added_date, b.description AS b_description " +
                     "FROM requests r " +
                     "LEFT JOIN books b ON b.id = r.book_id " +
                     "WHERE r.book_id = ? " +
@@ -68,7 +71,6 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
     private static final String SQL_DELETE_REQUEST_BY_ID =
             "DELETE FROM requests WHERE id = ?";
 
-    private final BookRowMapper bookMapper = new BookRowMapper();
     private final RequestRowMapper requestMapper = new RequestRowMapper();
 
     @Override
@@ -76,15 +78,112 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
         if (entity == null) throw new DaoException("Ошибка: request=null");
 
         try (Connection c = DataSource.getInstance().getConnection()) {
-            return inTx(c, () -> {
-                long id = insertRequestRow(c, entity);
-                entity.setId(id);
-                insertRequestOrders(c, entity);
-                return entity;
-            });
+            return create(c, entity);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка создания запроса: " + entity, e);
+            throw new DaoException("Ошибка получения соединения при создании запроса: " + entity, e);
         }
+    }
+
+    public Request create(Connection c, Request entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (entity == null) throw new DaoException("Ошибка: request=null");
+
+        long id = insertReturningId(c, SQL_INSERT_REQUEST, ps -> {
+            long bookId = entity.getBookId();
+            if (bookId > 0) ps.setLong(1, bookId);
+            else ps.setNull(1, Types.BIGINT);
+
+            ps.setBoolean(2, entity.isResolved());
+        }, "Ошибка создания запроса: " + entity);
+
+        entity.setId(id);
+        insertRequestOrders(c, entity);
+        return entity;
+    }
+
+    @Override
+    public Optional<Request> findById(Long id) {
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findById(c, id);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при чтении запроса по id=" + id, e);
+        }
+    }
+
+    public Optional<Request> findById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        Optional<Request> opt = queryOne(
+                c,
+                SQL_FIND_REQUEST_BY_ID,
+                ps -> ps.setLong(1, id),
+                this::mapRequestWithBook,
+                "Ошибка чтения запроса по id=" + id
+        );
+
+        if (opt.isEmpty()) return Optional.empty();
+
+        Request r = opt.get();
+        r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
+        return Optional.of(r);
+    }
+
+    @Override
+    public List<Request> findAll() {
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findAll(c);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при чтении списка запросов", e);
+        }
+    }
+
+    public List<Request> findAll(Connection c) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+
+        List<Request> res = queryList(
+                c,
+                SQL_FIND_ALL_REQUESTS,
+                null,
+                this::mapRequestWithBook,
+                "Ошибка чтения списка запросов"
+        );
+
+        for (Request r : res) {
+            r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
+        }
+        return res;
+    }
+
+    public Optional<Request> findByBookId(long bookId) {
+        if (bookId <= 0) throw new DaoException("Ошибка: bookId некорректен: " + bookId);
+
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findByBookId(c, bookId);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при чтении запроса по bookId=" + bookId, e);
+        }
+    }
+
+    public Optional<Request> findByBookId(Connection c, long bookId) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (bookId <= 0) throw new DaoException("Ошибка: bookId некорректен: " + bookId);
+
+        Optional<Request> opt = queryOne(
+                c,
+                SQL_FIND_REQUEST_BY_BOOK_ID,
+                ps -> ps.setLong(1, bookId),
+                this::mapRequestWithBook,
+                "Ошибка чтения запроса по bookId=" + bookId
+        );
+
+        if (opt.isEmpty()) return Optional.empty();
+
+        Request r = opt.get();
+        r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
+        return Optional.of(r);
     }
 
     @Override
@@ -93,15 +192,37 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
         if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить request без id");
 
         try (Connection c = DataSource.getInstance().getConnection()) {
-            return inTx(c, () -> {
-                updateRequestRow(c, entity);
-                deleteRequestOrders(c, entity.getId());
-                insertRequestOrders(c, entity);
-                return entity;
-            });
+            return update(c, entity);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка обновления запроса id=" + entity.getId(), e);
+            throw new DaoException("Ошибка получения соединения при обновлении запроса id=" + entity.getId(), e);
         }
+    }
+
+    public Request update(Connection c, Request entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (entity == null) throw new DaoException("Ошибка: request=null");
+        if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить request без id");
+
+        int updated = execUpdate(c, SQL_UPDATE_REQUEST, ps -> {
+            long bookId = entity.getBookId();
+            if (bookId > 0) ps.setLong(1, bookId);
+            else ps.setNull(1, Types.BIGINT);
+
+            ps.setBoolean(2, entity.isResolved());
+            ps.setLong(3, entity.getId());
+        }, "Ошибка обновления запроса id=" + entity.getId());
+
+        if (updated == 0) throw new DaoException("Request не найден для обновления, id=" + entity.getId());
+
+        execUpdate(
+                c,
+                SQL_DELETE_REQUEST_ORDERS_BY_REQUEST,
+                ps -> ps.setLong(1, entity.getId()),
+                "Ошибка удаления связок request_orders для request_id=" + entity.getId()
+        );
+
+        insertRequestOrders(c, entity);
+        return entity;
     }
 
     @Override
@@ -109,141 +230,39 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
         if (id == null) throw new DaoException("Ошибка: id=null");
 
         try (Connection c = DataSource.getInstance().getConnection()) {
-            return inTx(c, () -> {
-                deleteRequestOrders(c, id);
-                try (PreparedStatement ps = c.prepareStatement(SQL_DELETE_REQUEST_BY_ID)) {
-                    ps.setLong(1, id);
-                    return ps.executeUpdate() > 0;
-                }
-            });
+            return deleteById(c, id);
         } catch (SQLException e) {
-            throw new DaoException("Ошибка удаления запроса id=" + id, e);
+            throw new DaoException("Ошибка получения соединения при удалении запроса id=" + id, e);
         }
     }
 
-    @Override
-    public Optional<Request> findById(Long id) {
+    public boolean deleteById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
         if (id == null) throw new DaoException("Ошибка: id=null");
 
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_REQUEST_BY_ID)) {
+        execUpdate(
+                c,
+                SQL_DELETE_REQUEST_ORDERS_BY_REQUEST,
+                ps -> ps.setLong(1, id),
+                "Ошибка удаления связок request_orders для request_id=" + id
+        );
 
-            ps.setLong(1, id);
+        int deleted = execUpdate(
+                c,
+                SQL_DELETE_REQUEST_BY_ID,
+                ps -> ps.setLong(1, id),
+                "Ошибка удаления запроса id=" + id
+        );
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-
-                Request r = mapRequestWithBook(rs);
-                r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
-                return Optional.of(r);
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения запроса по id=" + id, e);
-        }
+        return deleted > 0;
     }
 
-    @Override
-    public List<Request> findAll() {
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_ALL_REQUESTS);
-             ResultSet rs = ps.executeQuery()) {
-
-            List<Request> res = new ArrayList<>();
-            while (rs.next()) {
-                Request r = mapRequestWithBook(rs);
-                r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
-                res.add(r);
-            }
-            return res;
-
-        } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения списка запросов", e);
-        }
-    }
-
-    public Optional<Request> findByBookId(long bookId) {
-        if (bookId <= 0) throw new DaoException("Ошибка: bookId некорректен: " + bookId);
-
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_REQUEST_BY_BOOK_ID)) {
-
-            ps.setLong(1, bookId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-
-                Request r = mapRequestWithBook(rs);
-                r.getWaitingOrders().addAll(loadOrdersStub(c, r.getId()));
-                return Optional.of(r);
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Ошибка чтения запроса по bookId=" + bookId, e);
-        }
-    }
-
-    private <T> T inTx(Connection c, TxWork<T> work) throws SQLException {
-        boolean old = c.getAutoCommit();
-        c.setAutoCommit(false);
-        try {
-            T res = work.run();
-            c.commit();
-            return res;
-        } catch (Exception e) {
-            c.rollback();
-            if (e instanceof RuntimeException re) throw re;
-            throw new DaoException("Ошибка выполнения транзакции", e);
-        } finally {
-            c.setAutoCommit(old);
-        }
-    }
-
-    @FunctionalInterface
-    private interface TxWork<T> {
-        T run() throws Exception;
-    }
-
-    private long insertRequestRow(Connection c, Request entity) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_INSERT_REQUEST)) {
-            long bookId = entity.getBookId();
-            if (bookId > 0) ps.setLong(1, bookId);
-            else ps.setNull(1, Types.BIGINT);
-
-            ps.setBoolean(2, entity.isResolved());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new DaoException("INSERT requests не вернул id");
-                return rs.getLong(1);
-            }
-        }
-    }
-
-    private void updateRequestRow(Connection c, Request entity) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_UPDATE_REQUEST)) {
-            long bookId = entity.getBookId();
-            if (bookId > 0) ps.setLong(1, bookId);
-            else ps.setNull(1, Types.BIGINT);
-
-            ps.setBoolean(2, entity.isResolved());
-            ps.setLong(3, entity.getId());
-
-            int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Request не найден для обновления, id=" + entity.getId());
-        }
-    }
-
-    private void deleteRequestOrders(Connection c, long requestId) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_DELETE_REQUEST_ORDERS_BY_REQUEST)) {
-            ps.setLong(1, requestId);
-            ps.executeUpdate();
-        }
-    }
-
-    private void insertRequestOrders(Connection c, Request entity) throws SQLException {
+    private void insertRequestOrders(Connection c, Request entity) {
         List<Order> orders = entity.getWaitingOrders();
         if (orders == null) orders = Collections.emptyList();
         if (orders.isEmpty()) return;
 
-        try (PreparedStatement ps = c.prepareStatement(SQL_INSERT_REQUEST_ORDER)) {
+        try (var ps = c.prepareStatement(SQL_INSERT_REQUEST_ORDER)) {
             for (Order o : orders) {
                 if (o == null) continue;
                 if (o.getId() == 0) throw new DaoException("Нельзя привязать заказ без id к запросу (order.id=0)");
@@ -252,34 +271,42 @@ public class RequestJdbcDao implements GenericDao<Request, Long> {
                 ps.addBatch();
             }
             ps.executeBatch();
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка вставки связок request_orders для request_id=" + entity.getId(), e);
         }
     }
 
-    private List<Order> loadOrdersStub(Connection c, long requestId) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_FIND_ORDER_IDS_BY_REQUEST)) {
-            ps.setLong(1, requestId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                List<Order> res = new ArrayList<>();
-                while (rs.next()) {
-                    long orderId = rs.getLong("order_id");
-                    res.add(new Order(orderId));
-                }
-                return res;
-            }
-        }
+    private List<Order> loadOrdersStub(Connection c, long requestId) {
+        return queryList(
+                c,
+                SQL_FIND_ORDER_IDS_BY_REQUEST,
+                ps -> ps.setLong(1, requestId),
+                rs -> new Order(rs.getLong("order_id")),
+                "Ошибка чтения request_orders (order_id) для request_id=" + requestId
+        );
     }
 
     private Request mapRequestWithBook(ResultSet rs) throws SQLException {
         Request r = requestMapper.map(rs);
 
-        long bookIdFromJoin = rs.getLong("id");
-        if (!rs.wasNull()) {
-            Book book = bookMapper.map(rs);
-            r.setBook(book);
-        } else {
+        Long bId = (Long) rs.getObject("b_id");
+        if (bId == null) {
             r.setBook(null);
+            return r;
         }
+
+        Book book = new Book(
+                bId,
+                rs.getString("b_title"),
+                rs.getString("b_author"),
+                rs.getDouble("b_price"),
+                BookStatus.fromDb(rs.getString("b_status")),
+                rs.getObject("b_release_date", java.time.LocalDate.class),
+                rs.getObject("b_added_date", java.time.LocalDate.class),
+                rs.getString("b_description")
+        );
+
+        r.setBook(book);
         return r;
     }
 }

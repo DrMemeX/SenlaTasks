@@ -12,8 +12,6 @@ import java.util.List;
 public class Order implements Serializable {
     private static final long serialVersionUID = 123L;
 
-//    private static long nextId = 1;
-
     private long id;
     private List<Book> orderedBooks;
     private OrderStatus status;
@@ -25,7 +23,6 @@ public class Order implements Serializable {
     private Customer customer;
 
     public Order() {
-//        this.id = nextId++;
         this.orderedBooks = new ArrayList<>();
         this.status = OrderStatus.NEW;
         this.creationDate = LocalDate.now();
@@ -40,13 +37,8 @@ public class Order implements Serializable {
         this.creationDate = LocalDate.now();
         this.completionDate = null;
         this.totalPrice = 0.0;
-
-//        if (id >= nextId) {
-//            nextId = id + 1;
-//        }
     }
 
-//    public static long getNextId() { return nextId; }
     public long getId() { return id; }
     public List<Book> getOrderedBooks() { return orderedBooks; }
     public OrderStatus getStatus() { return status; }
@@ -60,13 +52,8 @@ public class Order implements Serializable {
     }
     public Customer getCustomer() { return customer; }
 
-//    public static void setNextId(long nextId) { Order.nextId = nextId; }
-
     public void setId(long id) {
         this.id = id;
-//        if (id >= nextId) {
-//            nextId = id + 1;
-//        }
     }
 
     public boolean isNew() {

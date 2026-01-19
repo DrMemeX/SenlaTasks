@@ -10,12 +10,16 @@ import task3_4.exceptions.dao.DaoException;
 import task3_4.features.books.Book;
 import task3_4.features.orders.Order;
 
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @Singleton
-public class OrderJdbcDao implements GenericDao<Order, Long> {
+public class OrderJdbcDao extends AbstractJdbcDao implements GenericDao<Order, Long> {
 
     private static final String SQL_INSERT_ORDER =
             "INSERT INTO orders (customer_id, status, creation_date, completion_date, total_price) " +
@@ -57,141 +61,17 @@ public class OrderJdbcDao implements GenericDao<Order, Long> {
         if (entity == null) throw new DaoException("Ошибка: order=null");
 
         try (Connection c = DataSource.getInstance().getConnection()) {
-            boolean oldAutoCommit = c.getAutoCommit();
-            c.setAutoCommit(false);
-
-            try {
-                long newId = insertOrderRow(c, entity);
-                entity.setId(newId);
-
-                insertOrderBooks(c, entity);
-
-                c.commit();
-                return entity;
-            } catch (Exception e) {
-                c.rollback();
-                throw e;
-            } finally {
-                c.setAutoCommit(oldAutoCommit);
-            }
-
-        } catch (Exception e) {
-            throw new DaoException("Ошибка создания заказа: " + entity, e);
+            return create(c, entity);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при создании заказа: " + entity, e);
         }
     }
 
-    @Override
-    public Optional<Order> findById(Long id) {
-        if (id == null) throw new DaoException("Ошибка: id=null");
-
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_ORDER_BY_ID)) {
-
-            ps.setLong(1, id);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return Optional.empty();
-
-                Order o = orderMapper.map(rs);
-                o.setOrderedBooks(loadBooksForOrder(c, o.getId()));
-
-                return Optional.of(o);
-            }
-
-        } catch (Exception e) {
-            throw new DaoException("Ошибка чтения заказа по id=" + id, e);
-        }
-    }
-
-    @Override
-    public List<Order> findAll() {
-        try (Connection c = DataSource.getInstance().getConnection();
-             PreparedStatement ps = c.prepareStatement(SQL_FIND_ALL_ORDERS);
-             ResultSet rs = ps.executeQuery()) {
-
-            List<Order> res = new ArrayList<>();
-            while (rs.next()) {
-                Order o = orderMapper.map(rs);
-                o.setOrderedBooks(loadBooksForOrder(c, o.getId()));
-                res.add(o);
-            }
-            return res;
-
-        } catch (Exception e) {
-            throw new DaoException("Ошибка чтения списка заказов", e);
-        }
-    }
-
-    @Override
-    public Order update(Order entity) {
+    public Order create(Connection c, Order entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
         if (entity == null) throw new DaoException("Ошибка: order=null");
-        if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить заказ без id");
 
-        try (Connection c = DataSource.getInstance().getConnection()) {
-            boolean oldAutoCommit = c.getAutoCommit();
-            c.setAutoCommit(false);
-
-            try {
-                updateOrderRow(c, entity);
-
-                try (PreparedStatement del = c.prepareStatement(SQL_DELETE_ORDER_BOOKS_BY_ORDER)) {
-                    del.setLong(1, entity.getId());
-                    del.executeUpdate();
-                }
-
-                insertOrderBooks(c, entity);
-
-                c.commit();
-                return entity;
-            } catch (Exception e) {
-                c.rollback();
-                throw e;
-            } finally {
-                c.setAutoCommit(oldAutoCommit);
-            }
-
-        } catch (Exception e) {
-            throw new DaoException("Ошибка обновления заказа id=" + entity.getId(), e);
-        }
-    }
-
-    @Override
-    public boolean deleteById(Long id) {
-        if (id == null) throw new DaoException("Ошибка: id=null");
-
-        try (Connection c = DataSource.getInstance().getConnection()) {
-            boolean oldAutoCommit = c.getAutoCommit();
-            c.setAutoCommit(false);
-
-            try {
-                try (PreparedStatement ps = c.prepareStatement(SQL_DELETE_ORDER_BOOKS_BY_ORDER)) {
-                    ps.setLong(1, id);
-                    ps.executeUpdate();
-                }
-
-                int deleted;
-                try (PreparedStatement ps = c.prepareStatement(SQL_DELETE_ORDER_BY_ID)) {
-                    ps.setLong(1, id);
-                    deleted = ps.executeUpdate();
-                }
-
-                c.commit();
-                return deleted > 0;
-            } catch (Exception e) {
-                c.rollback();
-                throw e;
-            } finally {
-                c.setAutoCommit(oldAutoCommit);
-            }
-
-        } catch (Exception e) {
-            throw new DaoException("Ошибка удаления заказа id=" + id, e);
-        }
-    }
-
-    private long insertOrderRow(Connection c, Order entity) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_INSERT_ORDER)) {
-
+        long id = insertReturningId(c, SQL_INSERT_ORDER, ps -> {
             long customerId = entity.getCustomerId();
             if (customerId > 0) ps.setLong(1, customerId);
             else ps.setNull(1, Types.BIGINT);
@@ -205,17 +85,87 @@ public class OrderJdbcDao implements GenericDao<Order, Long> {
             else ps.setNull(4, Types.DATE);
 
             ps.setBigDecimal(5, java.math.BigDecimal.valueOf(entity.getTotalPrice()));
+        }, "Ошибка создания заказа: " + entity);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new DaoException("INSERT orders не вернул id");
-                return rs.getLong(1);
-            }
+        entity.setId(id);
+        insertOrderBooks(c, entity);
+        return entity;
+    }
+
+    @Override
+    public Optional<Order> findById(Long id) {
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findById(c, id);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при чтении заказа по id=" + id, e);
         }
     }
 
-    private void updateOrderRow(Connection c, Order entity) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_UPDATE_ORDER)) {
+    public Optional<Order> findById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (id == null) throw new DaoException("Ошибка: id=null");
 
+        Optional<Order> opt = queryOne(
+                c,
+                SQL_FIND_ORDER_BY_ID,
+                ps -> ps.setLong(1, id),
+                orderMapper,
+                "Ошибка чтения заказа по id=" + id
+        );
+
+        if (opt.isEmpty()) return Optional.empty();
+
+        Order o = opt.get();
+        o.setOrderedBooks(loadBooksForOrder(c, o.getId()));
+        return Optional.of(o);
+    }
+
+    @Override
+    public List<Order> findAll() {
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return findAll(c);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при чтении списка заказов", e);
+        }
+    }
+
+    public List<Order> findAll(Connection c) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+
+        List<Order> res = queryList(
+                c,
+                SQL_FIND_ALL_ORDERS,
+                null,
+                orderMapper,
+                "Ошибка чтения списка заказов"
+        );
+
+        for (Order o : res) {
+            o.setOrderedBooks(loadBooksForOrder(c, o.getId()));
+        }
+        return res;
+    }
+
+    @Override
+    public Order update(Order entity) {
+        if (entity == null) throw new DaoException("Ошибка: order=null");
+        if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить заказ без id");
+
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return update(c, entity);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при обновлении заказа id=" + entity.getId(), e);
+        }
+    }
+
+    public Order update(Connection c, Order entity) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (entity == null) throw new DaoException("Ошибка: order=null");
+        if (entity.isNew()) throw new DaoException("Ошибка: нельзя обновить заказ без id");
+
+        int updated = execUpdate(c, SQL_UPDATE_ORDER, ps -> {
             long customerId = entity.getCustomerId();
             if (customerId > 0) ps.setLong(1, customerId);
             else ps.setNull(1, Types.BIGINT);
@@ -230,17 +180,59 @@ public class OrderJdbcDao implements GenericDao<Order, Long> {
 
             ps.setBigDecimal(5, java.math.BigDecimal.valueOf(entity.getTotalPrice()));
             ps.setLong(6, entity.getId());
+        }, "Ошибка обновления заказа id=" + entity.getId());
 
-            int updated = ps.executeUpdate();
-            if (updated == 0) throw new DaoException("Заказ не найден для обновления, id=" + entity.getId());
+        if (updated == 0) throw new DaoException("Заказ не найден для обновления, id=" + entity.getId());
+
+        execUpdate(
+                c,
+                SQL_DELETE_ORDER_BOOKS_BY_ORDER,
+                ps -> ps.setLong(1, entity.getId()),
+                "Ошибка очистки связок order_books для заказа id=" + entity.getId()
+        );
+
+        insertOrderBooks(c, entity);
+        return entity;
+    }
+
+    @Override
+    public boolean deleteById(Long id) {
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        try (Connection c = DataSource.getInstance().getConnection()) {
+            return deleteById(c, id);
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка получения соединения при удалении заказа id=" + id, e);
         }
     }
 
-    private void insertOrderBooks(Connection c, Order entity) throws SQLException {
+    public boolean deleteById(Connection c, Long id) {
+        if (c == null) throw new DaoException("Ошибка: connection=null");
+        if (id == null) throw new DaoException("Ошибка: id=null");
+
+        execUpdate(
+                c,
+                SQL_DELETE_ORDER_BOOKS_BY_ORDER,
+                ps -> ps.setLong(1, id),
+                "Ошибка удаления связок order_books для заказа id=" + id
+        );
+
+        int deleted = execUpdate(
+                c,
+                SQL_DELETE_ORDER_BY_ID,
+                ps -> ps.setLong(1, id),
+                "Ошибка удаления заказа id=" + id
+        );
+
+        return deleted > 0;
+    }
+
+    private void insertOrderBooks(Connection c, Order entity) {
         List<Book> books = entity.getOrderedBooks();
         if (books == null) books = Collections.emptyList();
+        if (books.isEmpty()) return;
 
-        try (PreparedStatement ps = c.prepareStatement(SQL_INSERT_ORDER_BOOK)) {
+        try (var ps = c.prepareStatement(SQL_INSERT_ORDER_BOOK)) {
             for (Book b : books) {
                 if (b == null) continue;
                 if (b.getId() == 0) {
@@ -251,19 +243,19 @@ public class OrderJdbcDao implements GenericDao<Order, Long> {
                 ps.addBatch();
             }
             ps.executeBatch();
+        } catch (SQLException e) {
+            throw new DaoException("Ошибка привязки книг к заказу id=" + entity.getId(), e);
         }
     }
 
-    private List<Book> loadBooksForOrder(Connection c, long orderId) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(SQL_FIND_BOOKS_BY_ORDER_ID)) {
-            ps.setLong(1, orderId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                List<Book> res = new ArrayList<>();
-                while (rs.next()) res.add(bookMapper.map(rs));
-                return res;
-            }
-        }
+    private List<Book> loadBooksForOrder(Connection c, long orderId) {
+        return queryList(
+                c,
+                SQL_FIND_BOOKS_BY_ORDER_ID,
+                ps -> ps.setLong(1, orderId),
+                bookMapper,
+                "Ошибка загрузки книг для заказа id=" + orderId
+        );
     }
 }
 

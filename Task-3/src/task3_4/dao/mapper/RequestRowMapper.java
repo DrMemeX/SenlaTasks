@@ -15,11 +15,10 @@ public class RequestRowMapper implements RowMapper<Request> {
         long bookId = rs.getLong("book_id");
         if (rs.wasNull()) bookId = 0;
 
-        Request r = new Request(null);
+        Request r = new Request();
         r.setId(id);
         r.setResolved(resolved);
         r.setBookId(bookId);
-
         return r;
     }
 }

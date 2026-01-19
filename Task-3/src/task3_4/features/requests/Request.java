@@ -10,8 +10,6 @@ import java.util.List;
 public class Request implements Serializable {
     private static final long serialVersionUID = 1234L;
 
-//    private static long nextId = 1;
-
     private long id;
 
     private long bookId;
@@ -21,7 +19,6 @@ public class Request implements Serializable {
     private boolean resolved;
 
     public Request(Book book) {
-//        this.id = nextId++;
         this.book = book;
         if (book != null) {
             this.bookId = book.getId();
@@ -38,13 +35,11 @@ public class Request implements Serializable {
         }
         this.waitingOrders = new ArrayList<>();
         this.resolved = false;
-
-//        if (id >= nextId) {
-//            nextId = id + 1;
-//        }
     }
 
-//    public static long getNextId() {return nextId;}
+    public Request() {
+        this(null);
+    }
 
     public long getId() {return id;}
     public boolean isNew() {
@@ -60,13 +55,8 @@ public class Request implements Serializable {
     public List<Order> getWaitingOrders() {return waitingOrders;}
     public boolean isResolved() {return resolved;}
 
-//    public static void setNextId(long nextId) {Request.nextId = nextId;}
-
     public void setId(long id) {
         this.id = id;
-//        if (id >= nextId) {
-//            nextId = id + 1;
-//        }
     }
     public void setBookId(long bookId) { this.bookId = bookId; }
     public void setBook(Book book) {

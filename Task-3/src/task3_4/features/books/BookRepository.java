@@ -5,6 +5,7 @@ import di_module.di_annotation.Inject;
 import di_module.di_annotation.Singleton;
 import task3_4.dao.jdbc.BookJdbcDao;
 
+import java.sql.Connection;
 import java.util.List;
 
 @Component
@@ -40,6 +41,9 @@ public class BookRepository {
 
     public void updateBook(Book book) {
         dao.update(book);
+    }
+    public void updateBook(Connection c, Book book) {
+        dao.update(c, book);
     }
 
     public void restoreState(List<Book> bookState) {
